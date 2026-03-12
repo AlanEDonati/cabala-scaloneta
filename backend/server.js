@@ -5,10 +5,6 @@ const path = require("path");
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-app.listen(PORT, () => {
-  console.log(`Servidor corriendo en puerto ${PORT}`);
-});
-
 app.use(express.json());
 app.use(express.static(path.join(__dirname,"public")));
 
@@ -21,10 +17,6 @@ app.get("/test-db", async (req, res) => {
     console.error(error);
     res.status(500).send("Error conectando a la base de datos");
   }
-});
-
-app.listen(PORT, () => {
-  console.log(`Servidor corriendo en http://localhost:${PORT}`);
 });
 
 app.get("/users", async (req, res) => {
@@ -114,15 +106,19 @@ app.get("/predictions", async (req, res) => {
 
 app.get("/ranking", async (req,res)=>{
 
-const result = await db.query(`
-SELECT users.username, COUNT(predictions.id) as total
-FROM users
-LEFT JOIN predictions
-ON users.id = predictions.user_id
-GROUP BY users.username
-ORDER BY total DESC
-`)
+  const result = await db.query(`
+  SELECT users.username, COUNT(predictions.id) as total
+  FROM users
+  LEFT JOIN predictions
+  ON users.id = predictions.user_id
+  GROUP BY users.username
+  ORDER BY total DESC
+  `)
 
-res.json(result.rows)
+  res.json(result.rows)
 
 })
+
+app.listen(PORT, () => {
+  console.log(`Servidor corriendo en puerto ${PORT}`);
+});
