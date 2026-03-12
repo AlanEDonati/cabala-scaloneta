@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+<title>La Cábala de la Scaloneta</title>
+<meta charset="UTF-8">
+
+<style>
+
+body{
+font-family:Arial;
+background:#0a2342;
+color:white;
+text-align:center;
+}
+
+.container{
+width:400px;
+margin:auto;
+margin-top:50px;
+}
+
+input,button{
+padding:10px;
+margin:5px;
+width:100%;
+}
+
+button{
+background:#00c853;
+border:none;
+color:white;
+font-weight:bold;
+}
+
+.menu{
+margin:20px;
+}
+
+.menu button{
+width:auto;
+padding:10px 20px;
+margin:5px;
+background:#1e88e5;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<h1>La Cábala de la Scaloneta ⚽</h1>
+
+<div class="menu">
+
+<button onclick="mostrarSeccion('home')">Inicio</button>
+
+<button onclick="mostrarSeccion('predicciones')">Predicciones</button>
+
+<button onclick="mostrarSeccion('cabalas')">Cábalas</button>
+
+<button onclick="mostrarSeccion('ranking')">Ranking</button>
+
+<button onclick="mostrarSeccion('store')">Store</button>
+
+</div>
+
+<div class="container">
+
+<div id="home">
+
+<h2>Crear usuario</h2>
+
+<input id="username" placeholder="Tu nombre de hincha">
+<button onclick="crearUsuario()">Crear</button>
+
+<h2>Usuarios</h2>
+
+<button onclick="cargarUsuarios()">Ver usuarios</button>
+<ul id="listaUsuarios"></ul>
+
+</div>
+
+
+<div id="predicciones" style="display:none">
+
+<h2>Partidos</h2>
+
+<button onclick="cargarPartidos()">Ver partidos</button>
+<ul id="listaPartidos"></ul>
+
+<h2>Tu predicción</h2>
+
+<input id="scoreA" placeholder="Goles Argentina">
+<input id="scoreB" placeholder="Goles rival">
+
+<button onclick="enviarPrediccion()">Enviar predicción</button>
+
+</div>
+
+
+<div id="cabalas" style="display:none">
+
+<h2>Cábalas del hincha 🧿</h2>
+
+<input id="cabalaInput" placeholder="Escribe tu cábala">
+
+<button onclick="guardarCabala()">Guardar cábala</button>
+
+<button onclick="verCabalas()">Ver cábalas</button>
+
+<ul id="listaCabalas"></ul>
+
+</div>
+
+
+<div id="ranking" style="display:none">
+
+<h2>Ranking de hinchas 🏆</h2>
+
+<button onclick="verRanking()">Ver ranking</button>
+
+<ul id="listaRanking"></ul>
+
+</div>
+
+
+<div id="store" style="display:none">
+
+<h2>Tienda de la Scaloneta 🛍</h2>
+
+<p>Merch mundialero pronto.</p>
+
+</div>
+
+</div>
+<script>
+
+async function crearUsuario(){
+
+const username=document.getElementById("username").value
+
+await fetch("/users",{
+method:"POST",
+headers:{
+"Content-Type":"application/json"
+},
+body:JSON.stringify({username})
+})
+
+alert("Usuario creado")
+
+}
+
+async function cargarUsuarios(){
+
+const res=await fetch("/users")
+const users=await res.json()
+
+const lista=document.getElementById("listaUsuarios")
+
+lista.innerHTML=""
+
+users.forEach(u=>{
+const li=document.createElement("li")
+li.textContent=u.username
+lista.appendChild(li)
+})
+
+}
+
+async function cargarPartidos(){
+
+const res=await fetch("/matches")
+const matches=await res.json()
+
+const lista=document.getElementById("listaPartidos")
+
+lista.innerHTML=""
+
+matches.forEach(m=>{
+const li=document.createElement("li")
+li.textContent=m.team_a + " vs " + m.team_b
+lista.appendChild(li)
+})
+
+}
+
+async function enviarPrediccion(){
+
+const scoreA=document.getElementById("scoreA").value
+const scoreB=document.getElementById("scoreB").value
+
+await fetch("/predictions",{
+method:"POST",
+headers:{
+"Content-Type":"application/json"
+},
+body:JSON.stringify({
+user_id:1,
+match_id:1,
+score_a:scoreA,
+score_b:scoreB
+})
+})
+
+alert("Predicción enviada ⚽")
+
+}
+
+
+function mostrarSeccion(seccion){
+
+const secciones=["home","predicciones","cabalas","ranking","store"]
+
+secciones.forEach(s=>{
+document.getElementById(s).style.display="none"
+})
+
+document.getElementById(seccion).style.display="block"
+
+}
+
+async function guardarCabala(){
+
+const descripcion=document.getElementById("cabalaInput").value
+
+await fetch("/cabalas",{
+method:"POST",
+headers:{
+"Content-Type":"application/json"
+},
+body:JSON.stringify({
+user_id:1,
+descripcion:descripcion
+})
+})
+
+alert("Cábala guardada 🧿")
+
+}
+
+
+async function verCabalas(){
+
+const res=await fetch("/cabalas")
+
+const cabalas=await res.json()
+
+const lista=document.getElementById("listaCabalas")
+
+lista.innerHTML=""
+
+cabalas.forEach(c=>{
+
+const li=document.createElement("li")
+
+li.textContent=c.descripcion
+
+lista.appendChild(li)
+
+})
+
+}
+
+async function verRanking(){
+
+const res = await fetch("/ranking")
+
+const ranking = await res.json()
+
+const lista = document.getElementById("listaRanking")
+
+lista.innerHTML=""
+
+ranking.forEach(r=>{
+
+const li = document.createElement("li")
+
+li.textContent = r.username + " - " + r.total + " predicciones"
+
+lista.appendChild(li)
+
+})
+
+}
+</script>
+
+</body>
+</html>
