@@ -191,11 +191,9 @@ app.get("/cabalas", async (req,res)=>{
 try{
 
 const result = await db.query(`
-SELECT cabalas.descripcion, users.username
+SELECT descripcion
 FROM cabalas
-LEFT JOIN users
-ON cabalas.user_id = users.id
-ORDER BY cabalas.id DESC
+ORDER BY id DESC
 `)
 
 res.json(result.rows)
