@@ -193,7 +193,7 @@ try{
 const result = await db.query(`
 SELECT cabalas.descripcion, users.username
 FROM cabalas
-JOIN users
+LEFT JOIN users
 ON cabalas.user_id = users.id
 ORDER BY cabalas.id DESC
 `)
