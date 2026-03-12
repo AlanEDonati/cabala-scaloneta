@@ -162,3 +162,49 @@ res.status(500).send("Error guardando resultado")
 }
 
 })
+
+app.post("/cabalas", async (req,res)=>{
+
+try{
+
+const { user_id, descripcion } = req.body
+
+const result = await db.query(
+"INSERT INTO cabalas (user_id, descripcion) VALUES ($1,$2) RETURNING *",
+[user_id, descripcion]
+)
+
+res.json(result.rows[0])
+
+}catch(error){
+
+console.error(error)
+res.status(500).send("Error guardando cábala")
+
+}
+
+})
+
+
+app.get("/cabalas", async (req,res)=>{
+
+try{
+
+const result = await db.query(`
+SELECT cabalas.descripcion, users.username
+FROM cabalas
+JOIN users
+ON cabalas.user_id = users.id
+ORDER BY cabalas.id DESC
+`)
+
+res.json(result.rows)
+
+}catch(error){
+
+console.error(error)
+res.status(500).send("Error obteniendo cábalas")
+
+}
+
+})
