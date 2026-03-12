@@ -92,11 +92,12 @@ background:#1e88e5;
 
 <h2>Tu predicción</h2>
 
+<select id="matchSelect"></select>
+
 <input id="scoreA" placeholder="Goles Argentina">
 <input id="scoreB" placeholder="Goles rival">
 
 <button onclick="enviarPrediccion()">Enviar predicción</button>
-
 </div>
 
 
@@ -189,8 +190,9 @@ lista.appendChild(li)
 
 async function enviarPrediccion(){
 
-const scoreA=document.getElementById("scoreA").value
-const scoreB=document.getElementById("scoreB").value
+const scoreA = document.getElementById("scoreA").value
+const scoreB = document.getElementById("scoreB").value
+const match_id = document.getElementById("matchSelect").value
 
 await fetch("/predictions",{
 method:"POST",
@@ -199,7 +201,7 @@ headers:{
 },
 body:JSON.stringify({
 user_id:1,
-match_id:1,
+match_id:match_id,
 score_a:scoreA,
 score_b:scoreB
 })
@@ -283,6 +285,34 @@ li.textContent = r.username + " - " + r.total + " predicciones"
 lista.appendChild(li)
 
 })
+
+}
+
+async function cargarSelectorPartidos(){
+
+const res = await fetch("/matches")
+const matches = await res.json()
+
+const select = document.getElementById("matchSelect")
+
+select.innerHTML = ""
+
+matches.forEach(m => {
+
+const option = document.createElement("option")
+
+option.value = m.id
+option.textContent = m.team_a + " vs " + m.team_b
+
+select.appendChild(option)
+
+})
+
+}
+
+window.onload = function(){
+
+cargarSelectorPartidos()
 
 }
 </script>
