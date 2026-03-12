@@ -106,19 +106,59 @@ app.get("/predictions", async (req, res) => {
 
 app.get("/ranking", async (req,res)=>{
 
-  const result = await db.query(`
-  SELECT users.username, COUNT(predictions.id) as total
-  FROM users
-  LEFT JOIN predictions
-  ON users.id = predictions.user_id
-  GROUP BY users.username
-  ORDER BY total DESC
-  `)
+const result = await db.query(`
 
-  res.json(result.rows)
+SELECT
+u.username,
+
+SUM(
+CASE
+WHEN p.score_a = m.score_a AND p.score_b = m.score_b THEN 3
+WHEN
+(p.score_a > p.score_b AND m.score_a > m.score_b) OR
+(p.score_a < p.score_b AND m.score_a < m.score_b) OR
+(p.score_a = p.score_b AND m.score_a = m.score_b)
+THEN 1
+ELSE 0
+END
+) as puntos
+
+FROM predictions p
+
+JOIN matches m ON p.match_id = m.id
+JOIN users u ON p.user_id = u.id
+
+GROUP BY u.username
+ORDER BY puntos DESC
+
+`)
+
+res.json(result.rows)
 
 })
 
 app.listen(PORT, () => {
   console.log(`Servidor corriendo en puerto ${PORT}`);
 });
+
+app.post("/set-result", async (req,res)=>{
+
+try{
+
+const {match_id, score_a, score_b} = req.body
+
+await db.query(
+"UPDATE matches SET score_a=$1, score_b=$2 WHERE id=$3",
+[score_a, score_b, match_id]
+)
+
+res.send("Resultado guardado")
+
+}catch(error){
+
+console.error(error)
+res.status(500).send("Error guardando resultado")
+
+}
+
+})
