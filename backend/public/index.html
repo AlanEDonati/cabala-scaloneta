@@ -6,42 +6,110 @@
 <meta charset="UTF-8">
 
 <style>
-
-body{
-font-family:Arial;
-background:#0a2342;
-color:white;
-text-align:center;
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #74b9ff 0%, #ffffff 50%, #74b9ff 100%);
+    background-attachment: fixed;
+    color: #0a2342;
+    margin: 0;
+    padding-bottom: 50px;
 }
 
-.container{
-width:400px;
-margin:auto;
-margin-top:50px;
+h1 {
+    background-color: #0a2342;
+    color: #f1c40f; 
+    padding: 15px;
+    margin: 0;
+    font-size: 24px; /* Un poco más chico para móviles */
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+    border-bottom: 4px solid #f1c40f;
 }
 
-input,button{
-padding:10px;
-margin:5px;
-width:100%;
+.menu {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    background: #0a2342;
+    padding: 10px 0;
+    position: sticky;
+    top: 0;
+    z-index: 100;
 }
 
-button{
-background:#00c853;
-border:none;
-color:white;
-font-weight:bold;
+.menu button {
+    background: transparent;
+    border: 2px solid #74b9ff;
+    color: #74b9ff;
+    padding: 8px 15px;
+    margin: 5px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: 0.3s;
 }
 
-.menu{
-margin:20px;
+.menu button:hover {
+    background: #74b9ff;
+    color: #0a2342;
 }
 
-.menu button{
-width:auto;
-padding:10px 20px;
-margin:5px;
-background:#1e88e5;
+.container {
+    max-width: 450px;
+    margin: 20px auto;
+    background: rgba(255, 255, 255, 0.9);
+    padding: 20px;
+    border-radius: 15px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    color: #333;
+}
+
+h2 {
+    color: #0a2342;
+    border-bottom: 2px solid #74b9ff;
+    padding-bottom: 5px;
+}
+
+input, select {
+    padding: 12px;
+    margin: 10px 0;
+    width: calc(100% - 24px);
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    font-size: 16px;
+}
+
+button {
+    background: #27ae60;
+    color: white;
+    padding: 12px;
+    border: none;
+    border-radius: 8px;
+    width: 100%;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 4px 0 #1e8449;
+    transition: 0.2s;
+}
+
+button:active {
+    box-shadow: 0 0 0;
+    transform: translateY(4px);
+}
+
+ul {
+    list-style: none;
+    padding: 0;
+}
+
+li {
+    background: #f8f9fa;
+    margin: 8px 0;
+    padding: 12px;
+    border-left: 5px solid #74b9ff;
+    border-radius: 4px;
+    text-align: left;
+    font-weight: 500;
 }
 
 </style>
@@ -140,9 +208,9 @@ background:#1e88e5;
 
 async function crearUsuario(){
 
-const username=document.getElementById("username").value
+const username = document.getElementById("username").value
 
-await fetch("/users",{
+const res = await fetch("/users",{
 method:"POST",
 headers:{
 "Content-Type":"application/json"
@@ -150,7 +218,11 @@ headers:{
 body:JSON.stringify({username})
 })
 
-alert("Usuario creado")
+const user = await res.json()
+
+localStorage.setItem("user_id", user.id)
+
+alert("Usuario creado. Tu ID es " + user.id)
 
 }
 
@@ -200,30 +272,31 @@ headers:{
 "Content-Type":"application/json"
 },
 body:JSON.stringify({
-user_id:1,
+user_id: localStorage.getItem("user_id"),
 match_id:match_id,
 score_a:scoreA,
 score_b:scoreB
 })
 })
-
 alert("Predicción enviada ⚽")
 
 }
 
 
 function mostrarSeccion(seccion){
+    const secciones = ["home","predicciones","cabalas","ranking","store"];
+    
+    secciones.forEach(s => {
+        document.getElementById(s).style.display = "none";
+    });
 
-const secciones=["home","predicciones","cabalas","ranking","store"]
+    document.getElementById(seccion).style.display = "block";
 
-secciones.forEach(s=>{
-document.getElementById(s).style.display="none"
-})
-
-document.getElementById(seccion).style.display="block"
-
+    // CARGA AUTOMÁTICA AL ENTRAR
+    if(seccion === 'ranking') verRanking();
+    if(seccion === 'cabalas') verCabalas();
+    if(seccion === 'predicciones') cargarPartidos();
 }
-
 async function guardarCabala(){
 
 const descripcion=document.getElementById("cabalaInput").value
@@ -234,7 +307,7 @@ headers:{
 "Content-Type":"application/json"
 },
 body:JSON.stringify({
-user_id:1,
+user_id: localStorage.getItem("user_id"),
 descripcion:descripcion
 })
 })
@@ -263,28 +336,24 @@ li.textContent = c.username + ": " + c.descripcion
 lista.appendChild(li)
 
 })
-
 }
 
 async function verRanking(){
 
-const res = await fetch("/ranking")
+  const res = await fetch("/ranking")
+  const ranking = await res.json()
+  const lista = document.getElementById("listaRanking")
 
-const ranking = await res.json()
+  lista.innerHTML=""
 
-const lista = document.getElementById("listaRanking")
+  ranking.forEach(r=>{
+    const li = document.createElement("li")
+    
+    // Aquí está el cambio: (r.puntos || 0) para evitar errores si no tiene puntos
+    li.textContent = r.username + " - " + (r.puntos || 0) + " puntos"
 
-lista.innerHTML=""
-
-ranking.forEach(r=>{
-
-const li = document.createElement("li")
-
-li.textContent = r.username + " - " + r.total + " predicciones"
-
-lista.appendChild(li)
-
-})
+    lista.appendChild(li)
+  })
 
 }
 
