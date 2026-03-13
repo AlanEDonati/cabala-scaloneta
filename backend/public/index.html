@@ -8,128 +8,72 @@
 <style>
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    /* CAMBIO 1: El fondo es un degradado Celeste y Blanco, como la bandera */
-    background: linear-gradient(135deg, #a7d8f5 0%, #ffffff 50%, #a7d8f5 100%);
-    background-attachment: fixed;
-    color: #0a2342;
+    /* CAMBIO 1: Imagen de fondo sutil. Conseguí una de la hinchada o el estadio */
+    background: url('https://tusitio.com/ruta/a/imagen_hinchada_sutil.jpg') no-repeat center center fixed;
+    background-size: cover;
+    color: #03254c;
     margin: 0;
     padding-bottom: 50px;
 }
 
 h1 {
-    /* CAMBIO 2: Título en AZUL OSCURO de la selección, letras en DORADO y efecto de sombra */
-    background-color: #03254c; 
-    color: #f1c40f; /* Color Oro */
-    padding: 20px;
+    /* CAMBIO 2: Título épico. Azul oscuro con letras en ORO y efecto de brillo */
+    background-color: #03254c;
+    color: #f1c40f; 
+    padding: 25px;
     margin: 0;
-    text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
-    border-bottom: 5px solid #f1c40f; /* Franja dorada */
+    font-size: 28px;
+    text-shadow: 0 0 10px rgba(241, 196, 15, 0.7); /* Brillo dorado */
+    border-bottom: 5px solid #f1c40f;
+    text-align: center;
 }
 
 .menu {
-    /* CAMBIO 3: Menú un poco más ancho y el mismo azul oscuro */
-    display: flex;
-    justify-content: center;
-    gap: 10px;
-    flex-wrap: wrap;
-    background: #03254c;
-    padding: 20px 10px;
-    position: sticky;
-    top: 0;
-    z-index: 100;
+    background: rgba(3, 37, 76, 0.95); /* Un poco transparente */
+    padding: 20px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
 }
 
 .menu button {
-    /* CAMBIO 4: Botones del menú con bordes Celestes, más suaves y elegantes */
+    /* CAMBIO 3: Botones del menú estilo "píldora" profesional */
     background: transparent !important;
     border: 2px solid #a7d8f5 !important;
     color: #a7d8f5 !important;
-    padding: 10px 20px !important;
-    margin: 0 !important;
-    width: auto !important;
-    border-radius: 25px !important; /* Más redondeados, estilo "píldora" */
+    border-radius: 25px !important;
     font-size: 15px !important;
-    box-shadow: none !important;
-    cursor: pointer;
-    font-weight: bold;
     transition: 0.3s;
 }
 
 .menu button:hover {
     background: #a7d8f5 !important;
     color: #03254c !important;
+    transform: scale(1.05); /* Efecto de agrandado */
 }
 
 .container {
-    max-width: 450px;
-    margin: 40px auto;
-    /* CAMBIO 5: Tarjeta blanca más suave y con bordes más redondeados. Parecerá que flota */
-    background: white;
-    padding: 30px;
-    border-radius: 20px;
-    box-shadow: 0 15px 35px rgba(0,0,0,0.15); /* Sombra más pronunciada */
-    color: #333;
+    max-width: 500px; /* Un poco más ancho */
+    margin: 50px auto;
+    /* CAMBIO 4: Tarjeta central estilo "cristal" (Glassmorphism) */
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(5px); /* Desenfoque de fondo */
+    padding: 35px;
+    border-radius: 25px;
+    box-shadow: 0 15px 40px rgba(0,0,0,0.25);
 }
 
-h2 {
-    /* CAMBIO 6: Subtítulos en azul oscuro y con una línea celeste más sutil */
-    color: #03254c;
-    border-bottom: 2px solid #a7d8f5;
-    padding-bottom: 8px;
-    margin-top: 25px;
-}
-
-input, select {
-    padding: 14px;
-    margin: 12px 0;
-    width: calc(100% - 28px);
-    border: 1px solid #ddd;
-    border-radius: 10px;
-    font-size: 16px;
-    transition: 0.3s;
-}
-
-input:focus, select:focus {
-    border-color: #a7d8f5;
-    outline: none;
-    box-shadow: 0 0 5px rgba(167, 216, 245, 0.5);
-}
-
-button {
-    /* CAMBIO 7: El botón de acción es CELESTE para que combine, no verde. */
-    background: #a7d8f5;
-    color: #03254c; /* Texto azul oscuro para contraste */
-    padding: 14px;
-    border: none;
-    border-radius: 10px;
-    width: 100%;
-    font-size: 16px;
-    font-weight: bold;
-    cursor: pointer;
-    /* Sombra celeste para dar efecto de relieve */
-    box-shadow: 0 4px 0 #89c4eb;
-    transition: 0.2s;
-}
-
-button:active {
-    box-shadow: 0 0 0;
-    transform: translateY(4px);
-}
-
-ul {
-    list-style: none;
-    padding: 0;
-}
-
+/* CAMBIO 5: Toque de diseño en las listas. Cada ítem parece una tarjeta */
 li {
-    /* CAMBIO 8: Listas con fondo azul muy clarito y el borde celeste más grueso. Parecen tarjetas. */
     background: #f1f8fd;
     margin: 10px 0;
     padding: 15px;
+    border-radius: 10px;
     border-left: 6px solid #a7d8f5;
-    border-radius: 6px;
-    text-align: left;
-    font-weight: 500;
+    transition: 0.2s;
+}
+
+li:hover {
+    transform: translateX(5px); /* Efecto al pasar el mouse */
+    background: #e1f1fc;
 }
 </style>
 
