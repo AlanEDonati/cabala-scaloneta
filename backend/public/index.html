@@ -28,41 +28,41 @@ h1 {
 .menu {
     display: flex;
     justify-content: center;
+    gap: 10px; /* Espacio entre botones */
     flex-wrap: wrap;
     background: #0a2342;
-    padding: 10px 0;
+    padding: 15px 5px;
     position: sticky;
     top: 0;
     z-index: 100;
 }
 
 .menu button {
-    background: transparent;
-    border: 2px solid #74b9ff;
-    color: #74b9ff;
-    padding: 8px 15px;
-    margin: 5px;
-    border-radius: 20px;
+    background: transparent !important; /* Forzamos a que no sea verde */
+    border: 2px solid #74b9ff !important;
+    color: #74b9ff !important;
+    padding: 8px 15px !important;
+    margin: 0 !important;
+    width: auto !important; /* CLAVE: Para que no ocupen el 100% */
+    border-radius: 20px !important;
+    font-size: 14px !important;
+    box-shadow: none !important; /* Quitamos la sombra de botón de acción */
     cursor: pointer;
-    font-weight: bold;
-    transition: 0.3s;
 }
 
 .menu button:hover {
-    background: #74b9ff;
-    color: #0a2342;
+    background: #74b9ff !important;
+    color: #0a2342 !important;
 }
 
 .container {
     max-width: 450px;
-    margin: 20px auto;
-    background: rgba(255, 255, 255, 0.9);
-    padding: 20px;
-    border-radius: 15px;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-    color: #333;
+    margin: 40px auto; /* Aumentamos el margen superior */
+    background: white;
+    padding: 30px;
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
 }
-
 h2 {
     color: #0a2342;
     border-bottom: 2px solid #74b9ff;
