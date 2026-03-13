@@ -75,6 +75,41 @@ li:hover {
     transform: translateX(5px); /* Efecto al pasar el mouse */
     background: #e1f1fc;
 }
+
+.modal-overlay {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.85);
+    display: flex; justify-content: center; align-items: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background: white;
+    width: 90%; max-width: 400px;
+    border-radius: 20px; overflow: hidden;
+    text-align: center;
+    animation: aparecer 0.3s ease-out;
+}
+
+@keyframes aparecer {
+    from { transform: scale(0.5); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+
+.modal-content img {
+    width: 100%; height: 200px; object-fit: cover;
+}
+
+.modal-text { padding: 20px; }
+
+.modal-text h2 { color: #03254c; border: none; margin: 0; }
+
+.modal-text button {
+    background: #f1c40f; color: #03254c;
+    margin-top: 15px; box-shadow: 0 4px 0 #d4ac0d;
+}
+
 </style>
 
 </head>
@@ -169,6 +204,9 @@ li:hover {
 </div>
 <script>
 
+    const sonidoGol = new Audio('https://www.soundjay.com/misc/sounds/cheering-01.mp3'); 
+// Nota: Este es un sonido de hinchada festejando.
+
 async function crearUsuario(){
 
 const username = document.getElementById("username").value
@@ -223,32 +261,41 @@ lista.appendChild(li)
 
 }
 
-async function enviarPrediccion(){
+async function enviarPrediccion() {
+    const scoreA = document.getElementById("scoreA").value;
+    const scoreB = document.getElementById("scoreB").value;
+    const match_id = document.getElementById("matchSelect").value;
 
-const scoreA = document.getElementById("scoreA").value
-const scoreB = document.getElementById("scoreB").value
-const match_id = document.getElementById("matchSelect").value
+    // Validación rápida para que no manden datos vacíos
+    if (!scoreA || !scoreB) {
+        alert("¡Poné los goles, no seas pecho frío!");
+        return;
+    }
 
-await fetch("/predictions",{
-method:"POST",
-headers:{
-"Content-Type":"application/json"
-},
-body:JSON.stringify({
-user_id: localStorage.getItem("user_id"),
-match_id:match_id,
-score_a:scoreA,
-score_b:scoreB
-})
-})
-alert("Predicción enviada ⚽")
+    await fetch("/predictions", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            user_id: localStorage.getItem("user_id"),
+            match_id: match_id,
+            score_a: scoreA,
+            score_b: scoreB
+        })
+    });
 
+    // REEMPLAZO DEL ALERT POR EL MODAL PRO
+    mostrarModal(
+        "¡VAMOS ARGENTINA!", 
+        "Tu predicción fue enviada. ¡A cruzar los dedos!", 
+        "https://media.tycsports.com/files/2022/11/26/509503/messi-festejo-mexico_862x485.webp"
+    );
 }
 
+function mostrarSeccion(seccion) {
+    const secciones = ["home", "predicciones", "cabalas", "ranking", "store"];
 
-function mostrarSeccion(seccion){
-    const secciones = ["home","predicciones","cabalas","ranking","store"];
-    
     secciones.forEach(s => {
         document.getElementById(s).style.display = "none";
     });
@@ -256,29 +303,44 @@ function mostrarSeccion(seccion){
     document.getElementById(seccion).style.display = "block";
 
     // CARGA AUTOMÁTICA AL ENTRAR
-    if(seccion === 'ranking') verRanking();
-    if(seccion === 'cabalas') verCabalas();
-    if(seccion === 'predicciones') cargarPartidos();
-}
-async function guardarCabala(){
-
-const descripcion=document.getElementById("cabalaInput").value
-
-await fetch("/cabalas",{
-method:"POST",
-headers:{
-"Content-Type":"application/json"
-},
-body:JSON.stringify({
-user_id: localStorage.getItem("user_id"),
-descripcion:descripcion
-})
-})
-
-alert("Cábala guardada 🧿")
-
+    if (seccion === 'ranking') verRanking();
+    if (seccion === 'cabalas') verCabalas();
+    if (seccion === 'predicciones') {
+        cargarPartidos();
+        cargarSelectorPartidos(); // Importante para que se llene el select de predicciones
+    }
 }
 
+async function guardarCabala() {
+    const descripcion = document.getElementById("cabalaInput").value;
+
+    if (!descripcion) {
+        alert("Escribí algo, ¡la cábala no se adivina sola!");
+        return;
+    }
+
+    await fetch("/cabalas", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            user_id: localStorage.getItem("user_id"),
+            descripcion: descripcion
+        })
+    });
+
+    // REEMPLAZO DEL ALERT POR EL MODAL PRO
+    mostrarModal(
+        "¡CÁBALA ACTIVADA!", 
+        "Con esto la Scaloneta no puede fallar. ¡Elijo creer!", 
+        "https://img.asmedia.epimg.net/resizer/v2/4S6F6L2Z3ZKBHLQO4D2W6W6W6A.jpg?auth=76b0f0b0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0&width=644&height=362&smart=true"
+    );
+    
+    // Limpiamos el input después de guardar
+    document.getElementById("cabalaInput").value = "";
+    verCabalas(); // Refrescamos la lista para ver la nueva
+}
 
 async function verCabalas(){
 
@@ -347,7 +409,34 @@ window.onload = function(){
 cargarSelectorPartidos()
 
 }
+
+function mostrarModal(titulo, mensaje, imagen) {
+    document.getElementById("modalTitulo").innerText = titulo;
+    document.getElementById("modalMensaje").innerText = mensaje;
+    if(imagen) document.getElementById("imgFestejo").src = imagen;
+    
+    document.getElementById("modalGol").style.display = "flex";
+    
+    // REPRODUCIR SONIDO
+    sonidoGol.play().catch(error => console.log("El navegador bloqueó el audio inicial: ", error));
+}
+
+function cerrarModal() {
+    document.getElementById("modalGol").style.display = "none";
+}
+
 </script>
+
+<div id="modalGol" class="modal-overlay" style="display:none">
+    <div class="modal-content">
+        <img id="imgFestejo" src="https://media.tycsports.com/files/2022/11/26/509503/messi-festejo-mexico_862x485.webp" alt="GOL">
+        <div class="modal-text">
+            <h2 id="modalTitulo">¡VAMOS CARAJO!</h2>
+            <p id="modalMensaje">Tu cábala ha sido activada con éxito.</p>
+            <button onclick="cerrarModal()">Cerrar</button>
+        </div>
+    </div>
+</div>
 
 </body>
 </html>
