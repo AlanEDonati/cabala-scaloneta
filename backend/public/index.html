@@ -8,7 +8,8 @@
 <style>
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: linear-gradient(135deg, #74b9ff 0%, #ffffff 50%, #74b9ff 100%);
+    /* CAMBIO 1: El fondo es un degradado Celeste y Blanco, como la bandera */
+    background: linear-gradient(135deg, #a7d8f5 0%, #ffffff 50%, #a7d8f5 100%);
     background-attachment: fixed;
     color: #0a2342;
     margin: 0;
@@ -16,79 +17,97 @@ body {
 }
 
 h1 {
-    background-color: #0a2342;
-    color: #f1c40f; 
-    padding: 15px;
+    /* CAMBIO 2: Título en AZUL OSCURO de la selección, letras en DORADO y efecto de sombra */
+    background-color: #03254c; 
+    color: #f1c40f; /* Color Oro */
+    padding: 20px;
     margin: 0;
-    font-size: 24px; /* Un poco más chico para móviles */
     text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
-    border-bottom: 4px solid #f1c40f;
+    border-bottom: 5px solid #f1c40f; /* Franja dorada */
 }
 
 .menu {
+    /* CAMBIO 3: Menú un poco más ancho y el mismo azul oscuro */
     display: flex;
     justify-content: center;
-    gap: 10px; /* Espacio entre botones */
+    gap: 10px;
     flex-wrap: wrap;
-    background: #0a2342;
-    padding: 15px 5px;
+    background: #03254c;
+    padding: 20px 10px;
     position: sticky;
     top: 0;
     z-index: 100;
 }
 
 .menu button {
-    background: transparent !important; /* Forzamos a que no sea verde */
-    border: 2px solid #74b9ff !important;
-    color: #74b9ff !important;
-    padding: 8px 15px !important;
+    /* CAMBIO 4: Botones del menú con bordes Celestes, más suaves y elegantes */
+    background: transparent !important;
+    border: 2px solid #a7d8f5 !important;
+    color: #a7d8f5 !important;
+    padding: 10px 20px !important;
     margin: 0 !important;
-    width: auto !important; /* CLAVE: Para que no ocupen el 100% */
-    border-radius: 20px !important;
-    font-size: 14px !important;
-    box-shadow: none !important; /* Quitamos la sombra de botón de acción */
+    width: auto !important;
+    border-radius: 25px !important; /* Más redondeados, estilo "píldora" */
+    font-size: 15px !important;
+    box-shadow: none !important;
     cursor: pointer;
+    font-weight: bold;
+    transition: 0.3s;
 }
 
 .menu button:hover {
-    background: #74b9ff !important;
-    color: #0a2342 !important;
+    background: #a7d8f5 !important;
+    color: #03254c !important;
 }
 
 .container {
     max-width: 450px;
-    margin: 40px auto; /* Aumentamos el margen superior */
+    margin: 40px auto;
+    /* CAMBIO 5: Tarjeta blanca más suave y con bordes más redondeados. Parecerá que flota */
     background: white;
     padding: 30px;
     border-radius: 20px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    box-shadow: 0 15px 35px rgba(0,0,0,0.15); /* Sombra más pronunciada */
+    color: #333;
 }
+
 h2 {
-    color: #0a2342;
-    border-bottom: 2px solid #74b9ff;
-    padding-bottom: 5px;
+    /* CAMBIO 6: Subtítulos en azul oscuro y con una línea celeste más sutil */
+    color: #03254c;
+    border-bottom: 2px solid #a7d8f5;
+    padding-bottom: 8px;
+    margin-top: 25px;
 }
 
 input, select {
-    padding: 12px;
-    margin: 10px 0;
-    width: calc(100% - 24px);
-    border: 2px solid #ddd;
-    border-radius: 8px;
+    padding: 14px;
+    margin: 12px 0;
+    width: calc(100% - 28px);
+    border: 1px solid #ddd;
+    border-radius: 10px;
     font-size: 16px;
+    transition: 0.3s;
+}
+
+input:focus, select:focus {
+    border-color: #a7d8f5;
+    outline: none;
+    box-shadow: 0 0 5px rgba(167, 216, 245, 0.5);
 }
 
 button {
-    background: #27ae60;
-    color: white;
-    padding: 12px;
+    /* CAMBIO 7: El botón de acción es CELESTE para que combine, no verde. */
+    background: #a7d8f5;
+    color: #03254c; /* Texto azul oscuro para contraste */
+    padding: 14px;
     border: none;
-    border-radius: 8px;
+    border-radius: 10px;
     width: 100%;
     font-size: 16px;
     font-weight: bold;
     cursor: pointer;
-    box-shadow: 0 4px 0 #1e8449;
+    /* Sombra celeste para dar efecto de relieve */
+    box-shadow: 0 4px 0 #89c4eb;
     transition: 0.2s;
 }
 
@@ -103,15 +122,15 @@ ul {
 }
 
 li {
-    background: #f8f9fa;
-    margin: 8px 0;
-    padding: 12px;
-    border-left: 5px solid #74b9ff;
-    border-radius: 4px;
+    /* CAMBIO 8: Listas con fondo azul muy clarito y el borde celeste más grueso. Parecen tarjetas. */
+    background: #f1f8fd;
+    margin: 10px 0;
+    padding: 15px;
+    border-left: 6px solid #a7d8f5;
+    border-radius: 6px;
     text-align: left;
     font-weight: 500;
 }
-
 </style>
 
 </head>
