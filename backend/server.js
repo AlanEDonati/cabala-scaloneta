@@ -190,17 +190,13 @@ app.get("/cabalas", async (req,res)=>{
 
 try{
 
-const result = await db.query(`
-SELECT descripcion
-FROM cabalas
-ORDER BY id DESC
-`)
+const result = await db.query("SELECT * FROM cabalas ORDER BY id DESC")
 
 res.json(result.rows)
 
 }catch(error){
 
-console.error(error)
+console.error("ERROR CABALAS:", error)
 res.status(500).send("Error obteniendo cábalas")
 
 }
