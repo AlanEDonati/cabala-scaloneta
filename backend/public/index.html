@@ -2,6 +2,7 @@
 <html>
 
 <head>
+   
     <title>La Cábala de la Scaloneta</title>
     <meta charset="UTF-8">
 
@@ -334,6 +335,8 @@
 
 <body>
 
+<p id="usuarioActivo"></p>
+
 <h1>La Cábala de la Scaloneta ⚽</h1>
 
 <div class="menu">
@@ -554,34 +557,34 @@ async function mostrarSeccion(seccion) {
     }
 }
 async function guardarCabala() {
-    const descripcion = document.getElementById("cabalaInput").value;
+ const descripcion = document.getElementById("cabalaInput").value;
 
-    if (!descripcion) {
-        alert("Escribí algo, ¡la cábala no se adivina sola!");
-        return;
-    }
+ if (!descripcion) {
+ alert("Escribí algo, ¡la cábala no se adivina sola!");
+ return;
+ }
 
-    await fetch("/cabalas", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-            user_id: localStorage.getItem("user_id"),
-            descripcion: descripcion
-        })
-    });
+ await fetch("/cabalas", {
+ method: "POST",
+ headers: {
+ "Content-Type": "application/json"
+ },
+ body: JSON.stringify({
+ user_id: localStorage.getItem("user_id"),
+ descripcion: descripcion
+ })
+ });
 
-    // REEMPLAZO DEL ALERT POR EL MODAL PRO
-    mostrarModal(
-        "¡CÁBALA ACTIVADA!", 
-        "Con esto la Scaloneta no puede fallar. ¡Elijo creer!", 
-        "https://img.asmedia.epimg.net/resizer/v2/4S6F6L2Z3ZKBHLQO4D2W6W6W6A.jpg?auth=76b0f0b0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0&width=644&height=362&smart=true"
-    );
-    
-    // Limpiamos el input después de guardar
-    document.getElementById("cabalaInput").value = "";
-    verCabalas(); // Refrescamos la lista para ver la nueva
+ // REEMPLAZO DEL ALERT POR EL MODAL PRO
+ mostrarModal(
+ "¡CÁBALA ACTIVADA!", 
+ "Con esto la Scaloneta no puede fallar. ¡Elijo creer!", 
+ "https://img.asmedia.epimg.net/resizer/v2/4S6F6L2Z3ZKBHLQO4D2W6W6W6A.jpg?auth=76b0f0b0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0&width=644&height=362&smart=true"
+ );
+ 
+ // Limpiamos el input después de guardar
+ document.getElementById("cabalaInput").value = "";
+ verCabalas(); // Refrescamos la lista para ver la nueva
 }
 
 async function verCabalas(){
@@ -598,25 +601,48 @@ cabalas.forEach(c=>{
 
 const li=document.createElement("li")
 
-li.textContent = c.username + ": " + c.descripcion
+const texto = "🧿 " + c.username + ": " + c.descripcion
+
+li.textContent = texto
+
+const btn = document.createElement("button")
+
+btn.textContent = "Compartir"
+
+btn.onclick = function(){
+
+const tweet = encodeURIComponent(
+"Mi cábala para Argentina 🇦🇷:\n\n\"" +
+c.descripcion +
+"\"\n\n#Scaloneta #CabalaScaloneta\nhttps://cabala-scaloneta-1.onrender.com"
+)
+
+window.open(
+"https://twitter.com/intent/tweet?text=" + tweet,
+"_blank"
+)
+
+}
+
+li.appendChild(document.createElement("br"))
+li.appendChild(btn)
 
 lista.appendChild(li)
 
 })
-}
 
 async function verRanking() {
-    const res = await fetch("/ranking");
-    const ranking = await res.json();
-    const lista = document.getElementById("listaRanking");
+ const res = await fetch("/ranking");
+ const ranking = await res.json();
+ const lista = document.getElementById("listaRanking");
 
-    lista.innerHTML = ranking.map((r, i) => `
-        <div class="ranking-item">
-            <div class="rank-pos">${i + 1}</div>
-            <div class="rank-name">${r.username}</div>
-            <div class="rank-pts">${r.puntos || 0} PTS</div>
-        </div>
-    `).join('');
+ lista.innerHTML = ranking.map((r, i) => `
+ <div class="ranking-item">
+ <div class="rank-pos">${i + 1}</div>
+ <div class="rank-name">${r.username}</div>
+ <div class="rank-pts">${r.puntos || 0} PTS</div>
+ </div>
+ `).join('');
 }
 async function cargarSelectorPartidos(){
 
@@ -640,45 +666,71 @@ select.appendChild(option)
 
 }
 
+}
+
+function mostrarUsuario(){
+
+const user = localStorage.getItem("user_id")
+
+if(user){
+document.getElementById("usuarioActivo").textContent =
+"👤 Usuario activo ID: " + user
+}
+
+}
+
 window.onload = function(){
 
 cargarSelectorPartidos()
+verCabalas()
+verRanking()
+mostrarUsuario()
 
 }
 
 function mostrarModal(titulo, mensaje, imagen) {
-    document.getElementById("modalTitulo").innerText = titulo;
-    document.getElementById("modalMensaje").innerText = mensaje;
-    if(imagen) document.getElementById("imgFestejo").src = imagen;
-    
-    document.getElementById("modalGol").style.display = "flex";
-    
-    // REPRODUCIR SONIDO
-    sonidoGol.play().catch(error => console.log("El navegador bloqueó el audio inicial: ", error));
+document.getElementById("modalTitulo").innerText = titulo;
+document.getElementById("modalMensaje").innerText = mensaje;
+if(imagen) document.getElementById("imgFestejo").src = imagen;
+
+ document.getElementById("modalGol").style.display = "flex"; 
+ // REPRODUCIR SONIDO
+ sonidoGol.play().catch(error => console.log("El navegador bloqueó el audio inicial: ", error));
 }
 
 function cerrarModal() {
-    document.getElementById("modalGol").style.display = "none";
+ document.getElementById("modalGol").style.display = "none";
 }
 
 
 function comprar(id) {
-    // Acá podrías conectar con una API de pagos o simplemente un alert
-    alert("¡Buena elección, Colo! Producto añadido al carrito.");
-    console.log("Comprando producto ID:", id);
+ // Acá podrías conectar con una API de pagos o simplemente un alert
+alert("¡Buena elección, Colo! Producto añadido al carrito.");
+ console.log("Comprando producto ID:", id);
+}
+
+function mostrarUsuario(){
+
+const user = localStorage.getItem("user_id")
+
+if(user){
+document.getElementById("usuarioActivo").textContent =
+"👤 Usuario activo ID: " + user
+}
+
 }
 
 </script>
 
 <div id="modalGol" class="modal-overlay" style="display:none">
-    <div class="modal-content">
-        <img id="imgFestejo" src="https://media.tycsports.com/files/2022/11/26/509503/messi-festejo-mexico_862x485.webp" alt="GOL">
-        <div class="modal-text">
-            <h2 id="modalTitulo">¡VAMOS CARAJO!</h2>
-            <p id="modalMensaje">Tu cábala ha sido activada con éxito.</p>
-            <button onclick="cerrarModal()">Cerrar</button>
-        </div>
-    </div>
+ <div class="modal-content">
+ <img id="imgFestejo" src="https://media.tycsports.com/files/2022/11/26/509503/messi-festejo-mexico_862x485.webp" alt="GOL">
+ <div class="modal-text">
+ <h2 id="modalTitulo">¡VAMOS CARAJO!</h2>
+ <p id="modalMensaje">Tu cábala ha sido activada con éxito.</p>
+ <button onclick="cerrarModal()">Cerrar</button> </div>
+
+</div>
 </div>
 
 
