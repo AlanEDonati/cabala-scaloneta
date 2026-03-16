@@ -162,3 +162,28 @@ app.post("/set-result", async (req, res) => {
 app.listen(PORT, () => {
     console.log(`Servidor de la Scaloneta corriendo en puerto ${PORT}`);
 });
+
+// Obtener todos los productos del Store
+app.get("/products", async (req, res) => {
+    try {
+        const result = await db.query("SELECT * FROM products ORDER BY id DESC");
+        res.json(result.rows);
+    } catch (error) {
+        res.status(500).send("Error obteniendo productos");
+    }
+});
+
+// Agregar un nuevo producto (Solo desde el Panel de Admin)
+app.post("/products", async (req, res) => {
+    try {
+        const { name, price, image_url, category } = req.body;
+        const result = await db.query(
+            "INSERT INTO products (name, price, image_url, category) VALUES ($1, $2, $3, $4) RETURNING *",
+            [name, price, image_url, category]
+        );
+        res.json(result.rows[0]);
+    } catch (error) {
+        console.error(error);
+        res.status(500).send("Error al cargar producto");
+    }
+});

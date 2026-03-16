@@ -18,6 +18,21 @@
         <label>Partido:</label>
         <select id="matchSelectAdmin"></select>
 
+        <div class="container admin-card">
+    <h2>📦 Cargar Nuevo Producto</h2>
+    <div class="form-group">
+        <input type="text" id="prodName" placeholder="Nombre del producto (Ej: Camiseta)">
+        <input type="number" id="prodPrice" placeholder="Precio (Ej: 85000)">
+        <input type="text" id="prodImg" placeholder="URL de la imagen">
+        <select id="prodCat">
+            <option value="indumentaria">Indumentaria</option>
+            <option value="accesorios">Accesorios</option>
+            <option value="coleccionables">Coleccionables</option>
+        </select>
+        <button onclick="subirProducto()">Publicar en el Store</button>
+    </div>
+</div>
+
         <div style="display: flex; gap: 10px; align-items: center;">
             <input type="number" id="finalScoreA" placeholder="Goles A">
             <span>-</span>

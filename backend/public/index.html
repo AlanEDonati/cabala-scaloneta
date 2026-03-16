@@ -258,6 +258,74 @@ input, select {
     font-size: 0.8em;
 }
 
+.store-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    padding: 20px;
+}
+
+.product-card {
+    background: rgba(255, 255, 255, 0.07); /* Vidrio sutil */
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 20px;
+    padding: 20px;
+    text-align: center;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.product-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.4);
+    background: rgba(255, 255, 255, 0.12);
+}
+
+.product-img {
+    width: 100%;
+    height: auto;
+    filter: drop-shadow(0 10px 15px rgba(0,0,0,0.3)); /* Sombra real al objeto */
+    margin-bottom: 15px;
+}
+
+.price {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: #D4AF37; /* Dorado */
+    margin: 10px 0;
+}
+
+.badge {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: #74ACDF;
+    font-size: 0.7rem;
+    padding: 4px 8px;
+    border-radius: 8px;
+    font-weight: bold;
+}
+
+.modal-overlay {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0,0,0,0.85);
+    display: none; /* Se activa por JS */
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+}
+.modal-content {
+    background: #1a1a1a;
+    padding: 30px;
+    border-radius: 25px;
+    border: 2px solid var(--oro);
+    text-align: center;
+    max-width: 400px;
+}
+.modal-content img { width: 100%; border-radius: 15px; margin-bottom: 15px; }
+
 </style>
 
 </head>
@@ -314,22 +382,32 @@ input, select {
     </div>
 
     <div id="ranking" style="display:none" class="card">
-        <h2>Ranking de Hinchas 🏆</h2>
-        <div id="listaRanking" class="ranking-container">
-            </div>
+    <h2>Ranking de Hinchas 🏆</h2>
+    <div id="listaRanking" class="ranking-container"></div>
+</div> <div id="store" style="display:none" class="card">
+    <h2>Tienda de la Scaloneta 🛍️</h2>
+    </div>
     
             <div id="store" style="display:none" class="card">
     <h2>Tienda de la Scaloneta 🛍️</h2>
     <p style="text-align: center; font-size: 0.9em; opacity: 0.8;">Canjeá tus puntos o conseguí el Merch oficial</p>
     
     <div class="store-grid">
-        <div class="product-card">
-            <div class="product-badge">Top Ventas</div>
-            <img src="https://m.media-amazon.com/images/I/61S6u7N692L._AC_SX679_.jpg" alt="Camiseta">
-            <h3>Camiseta 3 Estrellas</h3>
-            <p class="price">$15.000 / 500 pts</p>
-            <button onclick="comprar(1)">Comprar</button>
-        </div>
+    <div class="product-card">
+        <div class="badge">OFICIAL</div>
+        <img src="img/camiseta-titular.png" alt="Camiseta" class="product-img">
+        <h3>Camiseta Titular</h3>
+        <p class="price">$89.999</p>
+        <button class="btn-buy" onclick="comprar(1)">¡La quiero!</button>
+    </div>
+
+    <div class="product-card">
+        <div class="badge">PREMIUM</div>
+        <img src="img/gorra-afa.png" alt="Gorra" class="product-img">
+        <h3>Gorra 3 Estrellas</h3>
+        <p class="price">$15.500</p>
+        <button class="btn-buy" onclick="comprar(2)">¡La quiero!</button>
+    </div>
 
         <div class="product-card">
             <img src="https://www.adidas.com.ar/glass/images/t_pro_product_model_3_4_standard/f7468160914644028975aef100a8979c_9366/Pelota_Al_Rihla_League_Blanco_H57782_01_standard.jpg" alt="Pelota">
@@ -522,25 +600,19 @@ lista.appendChild(li)
 })
 }
 
-async function verRanking(){
+async function verRanking() {
+    const res = await fetch("/ranking");
+    const ranking = await res.json();
+    const lista = document.getElementById("listaRanking");
 
-  const res = await fetch("/ranking")
-  const ranking = await res.json()
-  const lista = document.getElementById("listaRanking")
-
-  lista.innerHTML=""
-
-  ranking.forEach(r=>{
-    const li = document.createElement("li")
-    
-    // Aquí está el cambio: (r.puntos || 0) para evitar errores si no tiene puntos
-    li.textContent = r.username + " - " + (r.puntos || 0) + " puntos"
-
-    lista.appendChild(li)
-  })
-
+    lista.innerHTML = ranking.map((r, i) => `
+        <div class="ranking-item">
+            <div class="rank-pos">${i + 1}</div>
+            <div class="rank-name">${r.username}</div>
+            <div class="rank-pts">${r.puntos || 0} PTS</div>
+        </div>
+    `).join('');
 }
-
 async function cargarSelectorPartidos(){
 
 const res = await fetch("/matches")
@@ -584,13 +656,6 @@ function cerrarModal() {
     document.getElementById("modalGol").style.display = "none";
 }
 
-function mostrarSeccion(id) {
-    // Oculta todas
-    document.getElementById("home").style.display = "none";
-    document.getElementById("predicciones").style.display = "none";
-    document.getElementById("cabalas").style.display = "none";
-    document.getElementById("ranking").style.display = "none";
-    
     // Muestra la elegida
     document.getElementById(id).style.display = "block";
     
@@ -598,6 +663,12 @@ function mostrarSeccion(id) {
     if(id === 'predicciones') cargarPartidos();
     if(id === 'ranking') verRanking();
     if(id === 'cabalas') verCabalas();
+
+
+function comprar(id) {
+    // Acá podrías conectar con una API de pagos o simplemente un alert
+    alert("¡Buena elección, Colo! Producto añadido al carrito.");
+    console.log("Comprando producto ID:", id);
 }
 
 </script>
@@ -612,6 +683,7 @@ function mostrarSeccion(id) {
         </div>
     </div>
 </div>
+
 
 </body>
 </html>
