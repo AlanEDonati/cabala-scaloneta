@@ -1,40 +1,47 @@
 const express = require("express");
 const db = require("./db");
 const path = require("path");
+const fs = require("fs");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
 
-// 1. SERVIR ARCHIVOS ESTÁTICOS
-// Esto debe ir al principio para que encuentre el CSS y JS
-app.use(express.static(path.join(__dirname, "..", "public")));
+// --- CONFIGURACIÓN BLINDADA DE CARPETA PUBLIC ---
+// Intentamos detectar la ruta absoluta de la carpeta public
+const pathsAProbar = [
+    path.join(__dirname, "..", "public"), // Si está un nivel arriba (Estructura estándar)
+    path.join(process.cwd(), "public"),    // Si está en la raíz del proyecto
+    path.join(__dirname, "public")         // Si por error se metió dentro de backend
+];
 
-// 2. RUTAS DE NAVEGACIÓN (HTMLs)
-app.get("/debug-ruta", (req, res) => {
-    const fs = require("fs");
-    const path = require("path");
-    const rutaPublic = path.join(__dirname, "..", "public");
-    
-    let contenido = "";
-    try {
-        contenido = fs.readdirSync(rutaPublic);
-    } catch (e) {
-        contenido = "ERROR: No se encuentra la carpeta public en " + rutaPublic;
+let publicPath = "";
+
+for (const p of pathsAProbar) {
+    if (fs.existsSync(p)) {
+        publicPath = p;
+        console.log("✅ Carpeta public encontrada en:", p);
+        break;
     }
+}
 
-    res.json({
-        dirActual: __dirname,
-        buscandoEn: rutaPublic,
-        archivosEncontrados: contenido
+if (!publicPath) {
+    console.error("❌ ERROR CRÍTICO: No se encontró la carpeta 'public' en ninguna ubicación.");
+} else {
+    // Servir archivos estáticos
+    app.use(express.static(publicPath));
+
+    // Ruta raíz explícita
+    app.get("/", (req, res) => {
+        res.sendFile(path.join(publicPath, "index.html"));
     });
-});
 
-app.get("/admin", (req, res) => {
-    res.sendFile(path.join(__dirname, "..", "public", "admin.html"));
-});
-
+    // Ruta admin explícita
+    app.get("/admin", (req, res) => {
+        res.sendFile(path.join(publicPath, "admin.html"));
+    });
+}
 // --- RUTAS DE LA API (JSON) ---
 
 app.post("/users", async (req, res) => {
