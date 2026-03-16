@@ -6,12 +6,22 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
+
+// 1. SERVIR ARCHIVOS ESTÁTICOS
+// Esto debe ir al principio para que encuentre el CSS y JS
 app.use(express.static(path.join(__dirname, "..", "public")));
-// Esto le dice al servidor: "Cuando alguien entre a la URL principal, dale el index.html"
+
+// 2. RUTAS DE NAVEGACIÓN (HTMLs)
 app.get("/", (req, res) => {
     res.sendFile(path.join(__dirname, "..", "public", "index.html"));
 });
-// --- RUTAS DE USUARIOS ---
+
+app.get("/admin", (req, res) => {
+    res.sendFile(path.join(__dirname, "..", "public", "admin.html"));
+});
+
+// --- RUTAS DE LA API (JSON) ---
+
 app.post("/users", async (req, res) => {
     try {
         const { username } = req.body;
@@ -35,7 +45,6 @@ app.get("/users", async (req, res) => {
     }
 });
 
-// --- RUTAS DE PARTIDOS ---
 app.get("/matches", async (req, res) => {
     try {
         const result = await db.query("SELECT * FROM matches ORDER BY match_date ASC");
@@ -45,11 +54,9 @@ app.get("/matches", async (req, res) => {
     }
 });
 
-// --- RUTAS DE PREDICCIONES ---
 app.post("/predictions", async (req, res) => {
     try {
         const { user_id, match_id, score_a, score_b } = req.body;
-        // Upsert: Si ya existe una predicción del usuario para ese partido, se actualiza.
         const result = await db.query(
             `INSERT INTO predictions (user_id, match_id, score_a, score_b) 
              VALUES ($1, $2, $3, $4)
@@ -65,7 +72,6 @@ app.post("/predictions", async (req, res) => {
     }
 });
 
-// --- RUTA DE RANKING (Lógica de puntos corregida) ---
 app.get("/ranking", async (req, res) => {
     try {
         const result = await db.query(`
@@ -92,7 +98,6 @@ app.get("/ranking", async (req, res) => {
     }
 });
 
-// --- RUTAS DE CÁBALAS (Con nombre de usuario) ---
 app.post("/cabalas", async (req, res) => {
     try {
         const { user_id, descripcion } = req.body;
@@ -120,17 +125,13 @@ app.get("/cabalas", async (req, res) => {
     }
 });
 
-// --- GESTIÓN DE RESULTADOS (Panel de Admin) ---
 app.post("/set-result", async (req, res) => {
     try {
         const { match_id, score_a, score_b } = req.body;
-        
-        // El Socio te explica: esto actualiza el resultado real en la tabla matches
         await db.query(
             "UPDATE matches SET score_a = $1, score_b = $2 WHERE id = $3",
             [score_a, score_b, match_id]
         );
-        
         res.send("Resultado guardado. ¡Puntos repartidos!");
     } catch (error) {
         console.error(error);
@@ -138,10 +139,7 @@ app.post("/set-result", async (req, res) => {
     }
 });
 
+// 3. LEVANTAR EL SERVIDOR (Siempre al final)
 app.listen(PORT, () => {
     console.log(`Servidor de la Scaloneta corriendo en puerto ${PORT}`);
-});
-
-app.get("/admin", (req, res) => {
-    res.sendFile(path.join(__dirname, "..", "public", "admin.html"));
 });
