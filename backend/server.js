@@ -6,7 +6,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
-app.use(express.static(path.join(__dirname, "public")));
+app.use(express.static(path.join(__dirname, "..", "public")));
 
 // --- RUTAS DE USUARIOS ---
 app.post("/users", async (req, res) => {
@@ -140,5 +140,5 @@ app.listen(PORT, () => {
 });
 
 app.get("/admin", (req, res) => {
-    res.sendFile(path.join(__dirname, "public", "admin.html"));
+    res.sendFile(path.join(__dirname, "..", "public", "admin.html"));
 });
