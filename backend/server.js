@@ -9,11 +9,10 @@ const PORT = process.env.PORT || 3000;
 app.use(express.json());
 
 // --- CONFIGURACIÓN BLINDADA DE CARPETA PUBLIC ---
-// Intentamos detectar la ruta absoluta de la carpeta public
 const pathsAProbar = [
-    path.join(__dirname, "..", "public"), // Si está un nivel arriba (Estructura estándar)
-    path.join(process.cwd(), "public"),    // Si está en la raíz del proyecto
-    path.join(__dirname, "public")         // Si por error se metió dentro de backend
+    path.join(__dirname, "..", "public"), 
+    path.join(process.cwd(), "public"),    
+    path.join(__dirname, "public")         
 ];
 
 let publicPath = "";
@@ -29,20 +28,18 @@ for (const p of pathsAProbar) {
 if (!publicPath) {
     console.error("❌ ERROR CRÍTICO: No se encontró la carpeta 'public' en ninguna ubicación.");
 } else {
-    // Servir archivos estáticos
     app.use(express.static(publicPath));
 
-    // Ruta raíz explícita
     app.get("/", (req, res) => {
         res.sendFile(path.join(publicPath, "index.html"));
     });
 
-    // Ruta admin explícita
     app.get("/admin", (req, res) => {
         res.sendFile(path.join(publicPath, "admin.html"));
     });
 }
-// --- RUTAS DE LA API (JSON) ---
+
+// --- RUTAS DE LA API ---
 
 app.post("/users", async (req, res) => {
     try {
@@ -161,7 +158,7 @@ app.post("/set-result", async (req, res) => {
     }
 });
 
-// 3. LEVANTAR EL SERVIDOR (Siempre al final)
+// LEVANTAR EL SERVIDOR
 app.listen(PORT, () => {
     console.log(`Servidor de la Scaloneta corriendo en puerto ${PORT}`);
 });
