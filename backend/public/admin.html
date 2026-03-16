@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Control - La Scaloneta</title>
+    <link rel="stylesheet" href="style.css"> </head>
+<body>
+    <h1>Panel de Administración 🏆</h1>
+    <div class="menu">
+        <button onclick="window.location.href='index.html'">Volver a la App</button>
+    </div>
+
+    <div class="container">
+        <h2>Cargar Resultado Final</h2>
+        <p>Elegí el partido que terminó y poné el resultado real para repartir los puntos.</p>
+        
+        <label>Partido:</label>
+        <select id="matchSelectAdmin"></select>
+
+        <div style="display: flex; gap: 10px; align-items: center;">
+            <input type="number" id="finalScoreA" placeholder="Goles A">
+            <span>-</span>
+            <input type="number" id="finalScoreB" placeholder="Goles B">
+        </div>
+
+        <button onclick="guardarResultadoFinal()" style="background: #d4ac0d; margin-top: 20px;">
+            ¡REPARTIR PUNTOS!
+        </button>
+    </div>
+
+    <script>
+        // Cargar los partidos al inicio
+        async function cargarPartidosAdmin() {
+            const res = await fetch("/matches");
+            const partidos = await res.json();
+            const select = document.getElementById("matchSelectAdmin");
+            partidos.forEach(m => {
+                const opt = document.createElement("option");
+                opt.value = m.id;
+                opt.innerText = `${m.team_a} vs ${m.team_b} ${m.score_a !== null ? '(Ya tiene resultado)' : ''}`;
+                select.appendChild(opt);
+            });
+        }
+
+        async function guardarResultadoFinal() {
+            const match_id = document.getElementById("matchSelectAdmin").value;
+            const score_a = document.getElementById("finalScoreA").value;
+            const score_b = document.getElementById("finalScoreB").value;
+
+            if(score_a === "" || score_b === "") return alert("Faltan los goles, socio");
+
+            const res = await fetch("/set-result", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({ match_id, score_a, score_b })
+            });
+
+            if(res.ok) {
+                alert("¡Resultado guardado! Los puntos se actualizaron en el Ranking.");
+                location.reload();
+            }
+        }
+
+        cargarPartidosAdmin();
+    </script>
+</body>
+</html>

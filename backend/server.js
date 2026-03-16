@@ -117,6 +117,24 @@ app.get("/cabalas", async (req, res) => {
     }
 });
 
+// --- GESTIÓN DE RESULTADOS (Panel de Admin) ---
+app.post("/set-result", async (req, res) => {
+    try {
+        const { match_id, score_a, score_b } = req.body;
+        
+        // El Socio te explica: esto actualiza el resultado real en la tabla matches
+        await db.query(
+            "UPDATE matches SET score_a = $1, score_b = $2 WHERE id = $3",
+            [score_a, score_b, match_id]
+        );
+        
+        res.send("Resultado guardado. ¡Puntos repartidos!");
+    } catch (error) {
+        console.error(error);
+        res.status(500).send("Error guardando el resultado final");
+    }
+});
+
 app.listen(PORT, () => {
     console.log(`Servidor de la Scaloneta corriendo en puerto ${PORT}`);
 });
