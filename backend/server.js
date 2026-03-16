@@ -7,7 +7,10 @@ const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "..", "public")));
-
+// Esto le dice al servidor: "Cuando alguien entre a la URL principal, dale el index.html"
+app.get("/", (req, res) => {
+    res.sendFile(path.join(__dirname, "..", "public", "index.html"));
+});
 // --- RUTAS DE USUARIOS ---
 app.post("/users", async (req, res) => {
     try {
