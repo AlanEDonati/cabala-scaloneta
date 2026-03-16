@@ -138,3 +138,7 @@ app.post("/set-result", async (req, res) => {
 app.listen(PORT, () => {
     console.log(`Servidor de la Scaloneta corriendo en puerto ${PORT}`);
 });
+
+app.get("/admin", (req, res) => {
+    res.sendFile(path.join(__dirname, "public", "admin.html"));
+});
