@@ -1,13 +1,20 @@
 {
   "name": "cabala-scaloneta",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "version": "1.1.0",
+  "description": "Dashboard Pro de la Scaloneta - Industry 4.0 Aesthetic",
+  "main": "backend/server.js",
   "scripts": {
+    "start": "node backend/server.js",
+    "dev": "nodemon backend/server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": [
+    "scaloneta",
+    "afa",
+    "prode",
+    "web-app"
+  ],
+  "author": "Colo",
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
