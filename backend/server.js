@@ -12,8 +12,23 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, "..", "public")));
 
 // 2. RUTAS DE NAVEGACIÓN (HTMLs)
-app.get("/", (req, res) => {
-    res.sendFile(path.join(__dirname, "..", "public", "index.html"));
+app.get("/debug-ruta", (req, res) => {
+    const fs = require("fs");
+    const path = require("path");
+    const rutaPublic = path.join(__dirname, "..", "public");
+    
+    let contenido = "";
+    try {
+        contenido = fs.readdirSync(rutaPublic);
+    } catch (e) {
+        contenido = "ERROR: No se encuentra la carpeta public en " + rutaPublic;
+    }
+
+    res.json({
+        dirActual: __dirname,
+        buscandoEn: rutaPublic,
+        archivosEncontrados: contenido
+    });
 });
 
 app.get("/admin", (req, res) => {
