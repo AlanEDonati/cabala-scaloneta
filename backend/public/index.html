@@ -552,57 +552,57 @@ async function enviarPrediccion() {
         })
     });
 
-    // REEMPLAZO DEL ALERT POR EL MODAL PRO
-    mostrarModal(
-        "¡VAMOS ARGENTINA!", 
-        "Tu predicción fue enviada. ¡A cruzar los dedos!", 
-        "https://media.tycsports.com/files/2022/11/26/509503/messi-festejo-mexico_862x485.webp"
-    );
+ // REEMPLAZO DEL ALERT POR EL MODAL PRO
+mostrarModal(
+"¡VAMOS ARGENTINA!", 
+"Tu predicción fue enviada. ¡A cruzar los dedos!", 
+ "messi.jpg"
+ );
 }
 
 async function mostrarSeccion(seccion) {
-    // 1. TRUCO PARA EL SONIDO
-    if (sonidoGol && sonidoGol.paused) {
-        sonidoGol.play().then(() => {
-            sonidoGol.pause(); 
-            sonidoGol.currentTime = 0;
-        }).catch(e => console.log("Audio esperando interacción..."));
-    }
+ // 1. TRUCO PARA EL SONIDO
+ if (sonidoGol && sonidoGol.paused) {
+ sonidoGol.play().then(() => {
+ sonidoGol.pause(); 
+ sonidoGol.currentTime = 0;
+ }).catch(e => console.log("Audio esperando interacción..."));
+ }
 
-    const secciones = ["home", "predicciones", "cabalas", "ranking", "store"];
+const secciones = ["home", "predicciones", "cabalas", "ranking", "store"];
 
-    // 2. OCULTAR TODAS LAS SECCIONES
-    secciones.forEach(s => {
-        const elemento = document.getElementById(s);
-        if (elemento) elemento.style.display = "none";
-    });
+ // 2. OCULTAR TODAS LAS SECCIONES
+ secciones.forEach(s => {
+ const elemento = document.getElementById(s);
+ if (elemento) elemento.style.display = "none";
+ });
 
-    // 3. MOSTRAR LA SECCIÓN ELEGIDA
-    const seccionActiva = document.getElementById(seccion);
-    if (seccionActiva) {
-        seccionActiva.style.display = "block";
-        window.scrollTo(0, 0);
-    }
+ // 3. MOSTRAR LA SECCIÓN ELEGIDA
+ const seccionActiva = document.getElementById(seccion);
+ if (seccionActiva) {
+ seccionActiva.style.display = "block";
+ window.scrollTo(0, 0);
+ }
 
-    // 4. CARGA DE DATOS DESDE LA API
-    try {
-        switch (seccion) {
-            case 'ranking': 
-                await verRanking(); 
-                break;
-            case 'cabalas': 
-                await verCabalas(); 
-                break;
-            case 'predicciones': 
-                await Promise.all([cargarPartidos(), cargarSelectorPartidos()]); 
-                break;
-            case 'store':
-                console.log("Bienvenido al Store de la Scaloneta");
-                break;
-        }
-    } catch (error) {
-        console.error("Error al cargar datos de la sección:", error);
-    }
+ // 4. CARGA DE DATOS DESDE LA API
+ try {
+ switch (seccion) {
+ case 'ranking': 
+ await verRanking(); 
+ break;
+ case 'cabalas': 
+ await verCabalas(); 
+ break;
+ case 'predicciones': 
+await Promise.all([cargarPartidos(), cargarSelectorPartidos()]); 
+ break;
+ case 'store':
+ console.log("Bienvenido al Store de la Scaloneta");
+break;
+ }
+ } catch (error) {
+ console.error("Error al cargar datos de la sección:", error);
+ }
 }
 async function guardarCabala() {
 
@@ -643,7 +643,7 @@ document.getElementById("cabalaInput").value = ""
 mostrarModal(
 "¡CÁBALA ACTIVADA!",
 "Con esto la Scaloneta no puede fallar 🇦🇷",
-"https://media.tycsports.com/files/2022/11/26/509503/messi-festejo-mexico_862x485.webp"
+"messi.jpg"
 )
 
 // recargar feed
@@ -952,7 +952,7 @@ div.appendChild(p)
 
 <div id="modalGol" class="modal-overlay" style="display:none">
  <div class="modal-content">
- <img id="imgFestejo" src="https://media.tycsports.com/files/2022/11/26/509503/messi-festejo-mexico_862x485.webp" alt="GOL">
+ <img id="imgFestejo" src="messi.jpg" alt="GOL">
  <div class="modal-text">
  <h2 id="modalTitulo">¡VAMOS CARAJO!</h2>
  <p id="modalMensaje">Tu cábala ha sido activada con éxito.</p>
