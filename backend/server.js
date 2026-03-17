@@ -130,19 +130,28 @@ app.post("/cabalas", async (req, res) => {
     }
 });
 
-app.get("/cabalas", async (req, res) => {
-    try {
-        const result = await db.query(`
-            SELECT c.descripcion, u.username 
-            FROM cabalas c 
-            JOIN users u ON c.user_id = u.id 
-            ORDER BY c.id DESC
-        `);
-        res.json(result.rows);
-    } catch (error) {
-        res.status(500).send("Error obteniendo cábalas");
-    }
-});
+app.get("/cabalas", async (req,res)=>{
+
+try{
+
+const result = await db.query(`
+SELECT cabalas.id, cabalas.descripcion, cabalas.votos, users.username
+FROM cabalas
+JOIN users
+ON cabalas.user_id = users.id
+ORDER BY cabalas.votos DESC
+`)
+
+res.json(result.rows)
+
+}catch(error){
+
+console.error(error)
+res.status(500).send("Error obteniendo cábalas")
+
+}
+
+})
 
 app.post("/set-result", async (req, res) => {
     try {
@@ -187,3 +196,25 @@ app.post("/products", async (req, res) => {
         res.status(500).send("Error al cargar producto");
     }
 });
+
+app.post("/votar-cabala", async (req,res)=>{
+
+try{
+
+const {id} = req.body
+
+await db.query(
+"UPDATE cabalas SET votos = votos + 1 WHERE id=$1",
+[id]
+)
+
+res.send("Voto registrado")
+
+}catch(error){
+
+console.error(error)
+res.status(500).send("Error votando cábala")
+
+}
+
+})

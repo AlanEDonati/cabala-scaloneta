@@ -47,6 +47,7 @@
             margin: 20px auto;
             width: 90%;
             max-width: 600px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.25);
         }
 
         /* --- BOTONES MODERNOS --- */
@@ -326,9 +327,16 @@
             text-align: center;
             max-width: 400px;
         }
-    </style>
-</head>
+
 .modal-content img { width: 100%; border-radius: 15px; margin-bottom: 15px; }
+
+#cabalasTrending p{
+background: rgba(255,255,255,0.08);
+padding:10px;
+border-radius:10px;
+margin:5px 0;
+}
+
 </style>
 
 </head>
@@ -336,6 +344,7 @@
 <body>
 
 <p id="usuarioActivo"></p>
+<div id="hinchasActivos" style="margin-top:20px;font-weight:bold;"></div>
 
 <h1>La Cábala de la Scaloneta ⚽</h1>
 
@@ -350,6 +359,8 @@
 <button onclick="mostrarSeccion('ranking')">Ranking</button>
 
 <button onclick="mostrarSeccion('store')">Store</button>
+
+</div>
 
 <div class="container">
      <div id="home" class="card">
@@ -376,15 +387,35 @@
  </div>
  </div>
 
- <div id="cabalas" style="display:none" class="card">
- <h2>Muro de Cábalas 🧿</h2>
- <div class="input-group">
- <input id="cabalaInput" placeholder="¿Qué hacés para que ganemos?">
- <button onclick="guardarCabala()">Publicar</button>
+<div id="cabalas" style="display:none" class="card">
+
+<h2>Muro de Cábalas 🧿</h2>
+
+<div class="input-group">
+<input id="cabalaInput" placeholder="¿Qué hacés para que ganemos?">
+<button onclick="guardarCabala()">Publicar</button>
 </div>
-<div id="listaCabalas" class="feed">
+
+<hr style="margin:20px 0">
+
+<h3>🔥 Cábala más poderosa</h3>
+<div id="cabalaTop" style="margin-bottom:20px;font-weight:bold;"></div>
+
+<h3>🔥 Trending</h3>
+<div id="cabalasTrending" style="margin-bottom:20px;"></div>
+
+<h3>Últimas cábalas</h3>
+<div id="listaCabalas" class="feed"></div>
+
 </div>
- </div>
+
+<hr style="margin:20px 0">
+
+<h3>Últimas cábalas</h3>
+
+<div id="listaCabalas" class="feed"></div>
+
+</div>
 
 <div id="ranking" style="display:none" class="card">
  <h2>Ranking de Hinchas 🏆</h2>
@@ -428,7 +459,7 @@
 
 async function crearUsuario(){
 
-const username = document.getElementById("username").value
+const username=document.getElementById("username").value
 
 const res = await fetch("/users",{
 method:"POST",
@@ -441,8 +472,11 @@ body:JSON.stringify({username})
 const user = await res.json()
 
 localStorage.setItem("user_id", user.id)
+localStorage.setItem("username", user.username)
 
-alert("Usuario creado. Tu ID es " + user.id)
+alert("Usuario creado")
+
+mostrarUsuario()
 
 }
 
@@ -589,47 +623,87 @@ async function guardarCabala() {
 
 async function verCabalas(){
 
-const res=await fetch("/cabalas")
+// cargar cábala más votada
+verCabalaTop()
+verCabalasTrending()
 
-const cabalas=await res.json()
+const res = await fetch("/cabalas")
+const cabalas = await res.json()
 
-const lista=document.getElementById("listaCabalas")
+const lista = document.getElementById("listaCabalas")
 
-lista.innerHTML=""
+lista.innerHTML = ""
 
-cabalas.forEach(c=>{
+cabalas.forEach(c => {
 
-const li=document.createElement("li")
+const li = document.createElement("div")
+li.className = "cabala-item"
 
-const texto = "🧿 " + c.username + ": " + c.descripcion
+const p = document.createElement("p")
+p.textContent = "🧿 " + c.username + ": " + c.descripcion
 
-li.textContent = texto
+// botón votar
+const votar = document.createElement("button")
+votar.textContent = "👍 " + (c.votos || 0)
 
-const btn = document.createElement("button")
+votar.onclick = async function(){
 
-btn.textContent = "Compartir"
+await fetch("/votar-cabala",{
+method:"POST",
+headers:{
+"Content-Type":"application/json"
+},
+body: JSON.stringify({ id: c.id })
+})
 
-btn.onclick = function(){
+// sonido de hinchada
+sonidoGol.currentTime = 0
+sonidoGol.play().catch(()=>{})
 
-const tweet = encodeURIComponent(
-"Mi cábala para Argentina 🇦🇷:\n\n\"" +
-c.descripcion +
-"\"\n\n#Scaloneta #CabalaScaloneta\nhttps://cabala-scaloneta-1.onrender.com"
-)
-
-window.open(
-"https://twitter.com/intent/tweet?text=" + tweet,
-"_blank"
-)
+verCabalas()
 
 }
 
-li.appendChild(document.createElement("br"))
-li.appendChild(btn)
+// botón compartir
+const compartir = document.createElement("button")
+compartir.textContent = "Compartir"
+
+compartir.onclick = function(){
+compartirCabala(c.descripcion)
+}
+
+// botón invitar amigos (viral)
+const invitar = document.createElement("button")
+invitar.textContent = "Invitar amigos"
+
+invitar.onclick = function(){
+invitarVotarCabala(c.descripcion)
+}
+
+li.appendChild(p)
+li.appendChild(votar)
+li.appendChild(compartir)
+li.appendChild(invitar)
 
 lista.appendChild(li)
 
 })
+
+}
+
+async function votarCabala(id){
+
+await fetch("/votar-cabala",{
+method:"POST",
+headers:{
+"Content-Type":"application/json"
+},
+body:JSON.stringify({id})
+})
+
+verCabalas()
+
+}
 
 async function verRanking() {
  const res = await fetch("/ranking");
@@ -666,15 +740,16 @@ select.appendChild(option)
 
 }
 
-}
 
 function mostrarUsuario(){
 
-const user = localStorage.getItem("user_id")
+const username = localStorage.getItem("username")
 
-if(user){
+if(username){
+
 document.getElementById("usuarioActivo").textContent =
-"👤 Usuario activo ID: " + user
+"👤 Usuario: " + username
+
 }
 
 }
@@ -682,9 +757,12 @@ document.getElementById("usuarioActivo").textContent =
 window.onload = function(){
 
 cargarSelectorPartidos()
+cargarPartidos()
 verCabalas()
 verRanking()
+verHinchasActivos()
 mostrarUsuario()
+
 
 }
 
@@ -709,14 +787,90 @@ alert("¡Buena elección, Colo! Producto añadido al carrito.");
  console.log("Comprando producto ID:", id);
 }
 
-function mostrarUsuario(){
 
-const user = localStorage.getItem("user_id")
+async function verCabalaTop(){
 
-if(user){
-document.getElementById("usuarioActivo").textContent =
-"👤 Usuario activo ID: " + user
+const res = await fetch("/cabalas")
+const cabalas = await res.json()
+
+if(cabalas.length === 0) return
+
+const top = cabalas[0]
+
+const div = document.getElementById("cabalaTop")
+
+div.textContent =
+"🧿 " + top.username +
+": " + top.descripcion +
+" 👍 " + (top.votos || 0)
+
 }
+
+function compartirCabala(texto){
+
+const tweet = encodeURIComponent(
+"Mi cábala para Argentina 🇦🇷:\n\n\"" +
+texto +
+"\"\n\n#Scaloneta #CabalaScaloneta\nhttps://cabala-scaloneta-1.onrender.com"
+)
+
+window.open(
+"https://twitter.com/intent/tweet?text=" + tweet,
+"_blank"
+)
+
+}
+
+function invitarVotarCabala(texto){
+
+const mensaje = encodeURIComponent(
+"⚽ Necesito tu ayuda para que gane mi cábala 🇦🇷\n\n" +
+"\"" + texto + "\"\n\n" +
+"Entrá y votala acá 👇\n" +
+"https://cabala-scaloneta-1.onrender.com"
+)
+
+window.open(
+"https://wa.me/?text=" + mensaje,
+"_blank"
+)
+
+}
+
+async function verHinchasActivos(){
+
+const res = await fetch("/users")
+const users = await res.json()
+
+const div = document.getElementById("hinchasActivos")
+
+div.textContent = "🔥 Hinchas activos: " + users.length
+
+}
+
+async function verCabalasTrending(){
+
+const res = await fetch("/cabalas")
+const cabalas = await res.json()
+
+const div = document.getElementById("cabalasTrending")
+
+div.innerHTML = "<h3>🔥 Trending</h3>"
+
+const top = cabalas.slice(0,3)
+
+top.forEach(c=>{
+
+const p = document.createElement("p")
+
+p.textContent =
+"🧿 " + c.username +
+": " + c.descripcion +
+" 👍 " + (c.votos || 0)
+
+div.appendChild(p)
+
+})
 
 }
 
