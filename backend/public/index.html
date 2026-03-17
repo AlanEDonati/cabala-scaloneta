@@ -337,6 +337,26 @@ border-radius:10px;
 margin:5px 0;
 }
 
+.cabala-item {
+    background: rgba(255, 255, 255, 0.08);
+    padding: 15px;
+    border-radius: 12px;
+    margin-bottom: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.cabala-item button {
+    width: fit-content;
+}
+
+#listaCabalas {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
 </style>
 
 </head>
@@ -409,14 +429,6 @@ margin:5px 0;
 
 </div>
 
-<hr style="margin:20px 0">
-
-<h3>Últimas cábalas</h3>
-
-<div id="listaCabalas" class="feed"></div>
-
-</div>
-
 <div id="ranking" style="display:none" class="card">
  <h2>Ranking de Hinchas 🏆</h2>
  <div id="listaRanking" class="ranking-container"></div>
@@ -454,6 +466,8 @@ margin:5px 0;
  
 <script>
 
+let cacheCabalas = null
+let cacheTime = 0
  const sonidoGol = new Audio('https://www.soundjay.com/misc/sounds/cheering-01.mp3'); 
 // Nota: Este es un sonido de hinchada festejando.
 
@@ -591,63 +605,102 @@ async function mostrarSeccion(seccion) {
     }
 }
 async function guardarCabala() {
- const descripcion = document.getElementById("cabalaInput").value;
 
- if (!descripcion) {
- alert("Escribí algo, ¡la cábala no se adivina sola!");
- return;
- }
+const descripcion = document.getElementById("cabalaInput").value.trim();
 
- await fetch("/cabalas", {
- method: "POST",
- headers: {
- "Content-Type": "application/json"
- },
- body: JSON.stringify({
- user_id: localStorage.getItem("user_id"),
- descripcion: descripcion
- })
- });
-
- // REEMPLAZO DEL ALERT POR EL MODAL PRO
- mostrarModal(
- "¡CÁBALA ACTIVADA!", 
- "Con esto la Scaloneta no puede fallar. ¡Elijo creer!", 
- "https://img.asmedia.epimg.net/resizer/v2/4S6F6L2Z3ZKBHLQO4D2W6W6W6A.jpg?auth=76b0f0b0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0&width=644&height=362&smart=true"
- );
- 
- // Limpiamos el input después de guardar
- document.getElementById("cabalaInput").value = "";
- verCabalas(); // Refrescamos la lista para ver la nueva
+if (!descripcion) {
+alert("Escribí algo, ¡la cábala no se adivina sola!");
+return;
 }
 
-async function verCabalas(){
+// botón correcto
+const btn = document.querySelector("#cabalas .input-group button")
 
-// cargar cábala más votada
-verCabalaTop()
-verCabalasTrending()
+btn.disabled = true
+btn.textContent = "Publicando..."
 
-const res = await fetch("/cabalas")
-const cabalas = await res.json()
+try {
+
+await fetch("/cabalas", {
+method: "POST",
+headers: {
+"Content-Type": "application/json"
+},
+body: JSON.stringify({
+user_id: localStorage.getItem("user_id"),
+descripcion: descripcion
+})
+})
+
+// restaurar botón
+btn.disabled = false
+btn.textContent = "Publicar"
+
+// limpiar input
+document.getElementById("cabalaInput").value = ""
+
+// modal
+mostrarModal(
+"¡CÁBALA ACTIVADA!",
+"Con esto la Scaloneta no puede fallar 🇦🇷",
+"https://media.tycsports.com/files/2022/11/26/509503/messi-festejo-mexico_862x485.webp"
+)
+
+// recargar feed
+verCabalas()
+
+} catch (error) {
+
+console.error(error)
+
+// restaurar botón SIEMPRE
+btn.disabled = false
+btn.textContent = "Publicar"
+
+alert("Error al publicar la cábala")
+
+}
+
+}
+
+function renderCabalas(cabalas){
+
+verCabalaTop(cabalas)
+verCabalasTrending(cabalas)
 
 const lista = document.getElementById("listaCabalas")
 
 lista.innerHTML = ""
 
+if(!cabalas.length){
+lista.innerHTML = "<p>No hay cábalas todavía. Sé el primero 🧿</p>"
+return
+}
+
 cabalas.forEach(c => {
 
 const li = document.createElement("div")
 li.className = "cabala-item"
+li.classList.add("fadeIn")
 
 const p = document.createElement("p")
 p.textContent = "🧿 " + c.username + ": " + c.descripcion
 
-// botón votar
 const votar = document.createElement("button")
 votar.textContent = "👍 " + (c.votos || 0)
 
 votar.onclick = async function(){
 
+// 🚀 1. UPDATE UI INMEDIATO (optimista)
+c.votos = (c.votos || 0) + 1
+votar.textContent = "👍 " + c.votos
+
+sonidoGol.currentTime = 0
+sonidoGol.play().catch(()=>{})
+
+try {
+
+// 🛰️ 2. BACKEND EN PARALELO
 await fetch("/votar-cabala",{
 method:"POST",
 headers:{
@@ -656,34 +709,46 @@ headers:{
 body: JSON.stringify({ id: c.id })
 })
 
-// sonido de hinchada
-sonidoGol.currentTime = 0
-sonidoGol.play().catch(()=>{})
+} catch(e){
 
-verCabalas()
+console.error(e)
+
+// ❌ rollback si falla
+c.votos--
+votar.textContent = "👍 " + c.votos
+
+alert("Error al votar")
 
 }
 
-// botón compartir
+}
+
 const compartir = document.createElement("button")
 compartir.textContent = "Compartir"
-
 compartir.onclick = function(){
 compartirCabala(c.descripcion)
 }
 
-// botón invitar amigos (viral)
 const invitar = document.createElement("button")
 invitar.textContent = "Invitar amigos"
-
 invitar.onclick = function(){
 invitarVotarCabala(c.descripcion)
 }
 
+const actions = document.createElement("div")
+
+actions.style.display = "flex"
+actions.style.gap = "10px"
+
+actions.style.alignItems = "center"
+actions.style.flexWrap = "wrap"
+
+actions.appendChild(votar)
+actions.appendChild(compartir)
+actions.appendChild(invitar)
+
 li.appendChild(p)
-li.appendChild(votar)
-li.appendChild(compartir)
-li.appendChild(invitar)
+li.appendChild(actions)
 
 lista.appendChild(li)
 
@@ -691,19 +756,34 @@ lista.appendChild(li)
 
 }
 
-async function votarCabala(id){
+async function verCabalas(){
 
-await fetch("/votar-cabala",{
-method:"POST",
-headers:{
-"Content-Type":"application/json"
-},
-body:JSON.stringify({id})
-})
+try {
 
-verCabalas()
+const now = Date.now()
+
+if(cacheCabalas && (now - cacheTime < 10000)){
+  renderCabalas(cacheCabalas)
+  return
+}
+
+const res = await fetch("/cabalas")
+const cabalas = await res.json()
+
+cacheCabalas = cabalas
+cacheTime = now
+
+renderCabalas(cabalas)
+
+} catch (error) {
+
+console.error(error)
+document.getElementById("listaCabalas").innerHTML = "<p>Error cargando cábalas</p>"
 
 }
+
+}
+
 
 async function verRanking() {
  const res = await fetch("/ranking");
@@ -788,10 +868,7 @@ alert("¡Buena elección, Colo! Producto añadido al carrito.");
 }
 
 
-async function verCabalaTop(){
-
-const res = await fetch("/cabalas")
-const cabalas = await res.json()
+function verCabalaTop(cabalas){
 
 if(cabalas.length === 0) return
 
@@ -848,14 +925,11 @@ div.textContent = "🔥 Hinchas activos: " + users.length
 
 }
 
-async function verCabalasTrending(){
-
-const res = await fetch("/cabalas")
-const cabalas = await res.json()
+function verCabalasTrending(cabalas){
 
 const div = document.getElementById("cabalasTrending")
 
-div.innerHTML = "<h3>🔥 Trending</h3>"
+div.innerHTML = ""
 
 const top = cabalas.slice(0,3)
 
