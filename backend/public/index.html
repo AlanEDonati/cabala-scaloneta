@@ -359,6 +359,8 @@ margin:5px 0;
 
 </style>
 
+<div id="nivelUsuario" style="margin-bottom:10px;font-weight:bold;"></div>
+
 </head>
 
 <body>
@@ -466,6 +468,25 @@ margin:5px 0;
  
 <script>
 
+let puntos = parseInt(localStorage.getItem("puntos")) || 0
+
+function sumarPuntos(cantidad){
+  puntos += cantidad
+  localStorage.setItem("puntos", puntos)
+  mostrarNivel()
+}
+
+function obtenerNivel(puntos){
+
+if(puntos < 10) return "🧢 Hincha"
+if(puntos < 30) return "🥁 Fanático"
+if(puntos < 60) return "🔥 Cabulero Pro"
+
+return "👑 Brujo de la Scaloneta"
+
+}
+
+let votosGuardados = JSON.parse(localStorage.getItem("voted_cabalas")) || []
 let cacheCabalas = null
 let cacheTime = 0
  const sonidoGol = new Audio('https://www.soundjay.com/misc/sounds/cheering-01.mp3'); 
@@ -529,36 +550,54 @@ lista.appendChild(li)
 }
 
 async function enviarPrediccion() {
-    const scoreA = document.getElementById("scoreA").value;
-    const scoreB = document.getElementById("scoreB").value;
-    const match_id = document.getElementById("matchSelect").value;
 
-    // Validación rápida para que no manden datos vacíos
-    if (!scoreA || !scoreB) {
-        alert("¡Poné los goles, no seas pecho frío!");
-        return;
-    }
+  const scoreA = document.getElementById("scoreA").value;
+  const scoreB = document.getElementById("scoreB").value;
+  const match_id = document.getElementById("matchSelect").value;
 
-    await fetch("/predictions", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-            user_id: localStorage.getItem("user_id"),
-            match_id: match_id,
-            score_a: scoreA,
-            score_b: scoreB
-        })
-    });
+  if (!scoreA || !scoreB) {
+    alert("¡Poné los goles, no seas pecho frío!");
+    return;
+  }
 
+  try {
+
+    const res = await fetch("/predictions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        user_id: localStorage.getItem("user_id"),
+        match_id: match_id,
+        score_a: scoreA,
+        score_b: scoreB
+      })
+    })
+
+    if (!res.ok) {
+      throw new Error("Error al enviar predicción")
+    }
+
+    mostrarModal(
+      "¡VAMOS ARGENTINA!", 
+      "Tu predicción fue enviada. ¡A cruzar los dedos!", 
+      "messi.jpg"
+    )
+
+  } catch (error) {
+    console.error(error)
+    alert("Error enviando predicción")
+  }
+
+}
  // REEMPLAZO DEL ALERT POR EL MODAL PRO
 mostrarModal(
 "¡VAMOS ARGENTINA!", 
 "Tu predicción fue enviada. ¡A cruzar los dedos!", 
  "messi.jpg"
  );
-}
+
 
 async function mostrarSeccion(seccion) {
  // 1. TRUCO PARA EL SONIDO
@@ -609,8 +648,8 @@ async function guardarCabala() {
 const descripcion = document.getElementById("cabalaInput").value.trim();
 
 if (!descripcion) {
-alert("Escribí algo, ¡la cábala no se adivina sola!");
-return;
+  alert("Escribí algo, ¡la cábala no se adivina sola!");
+  return;
 }
 
 // botón correcto
@@ -621,43 +660,98 @@ btn.textContent = "Publicando..."
 
 try {
 
-await fetch("/cabalas", {
-method: "POST",
-headers: {
-"Content-Type": "application/json"
-},
-body: JSON.stringify({
-user_id: localStorage.getItem("user_id"),
-descripcion: descripcion
+  const res = await fetch("/cabalas", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json"
+  },
+  body: JSON.stringify({
+    user_id: localStorage.getItem("user_id"),
+    descripcion: descripcion
+  })
 })
-})
 
-// restaurar botón
-btn.disabled = false
-btn.textContent = "Publicar"
+if (!res.ok) {
+  throw new Error("Error en servidor")
+}
 
-// limpiar input
-document.getElementById("cabalaInput").value = ""
+  // ✅ puntos solo si éxito
+  sumarPuntos(5)
 
-// modal
-mostrarModal(
-"¡CÁBALA ACTIVADA!",
-"Con esto la Scaloneta no puede fallar 🇦🇷",
-"messi.jpg"
-)
+  // limpiar input
+  document.getElementById("cabalaInput").value = ""
 
-// recargar feed
-verCabalas()
+  // modal éxito
+  mostrarModal(
+    "¡CÁBALA ACTIVADA!",
+    "Con esto la Scaloneta no puede fallar 🇦🇷",
+    "messi.jpg"
+  )
+
+  // loading + refresh
+  document.getElementById("listaCabalas").innerHTML = "Cargando cábalas..."
+  cacheCabalas = null
+  await verCabalas()
 
 } catch (error) {
 
-console.error(error)
+  console.error(error)
+  alert("Error al publicar la cábala")
 
-// restaurar botón SIEMPRE
-btn.disabled = false
-btn.textContent = "Publicar"
+} finally {
 
-alert("Error al publicar la cábala")
+  // SIEMPRE se ejecuta
+  btn.disabled = false
+  btn.textContent = "Publicar"
+
+}
+
+}
+
+
+// ================= FETCH CABALAS =================
+
+async function verCabalas(){
+
+document.getElementById("listaCabalas").innerHTML = "Cargando cábalas..."
+
+try {
+
+  const now = Date.now()
+
+if(cacheCabalas){
+
+  // 1. render inmediato
+  renderCabalas(cacheCabalas)
+
+  // 2. actualizar en segundo plano
+  fetch("/cabalas")
+    .then(res => res.json())
+    .then(data => {
+      cacheCabalas = data
+      renderCabalas(data)
+    })
+    .catch(()=>{})
+
+  return
+}
+const res = await fetch("/cabalas")
+
+if (!res.ok) {
+  throw new Error("Error al obtener cábalas")
+}
+
+const cabalas = await res.json()
+
+  cacheCabalas = cabalas
+  cacheTime = now
+
+  renderCabalas(cabalas)
+
+} catch (error) {
+
+  console.error(error)
+  document.getElementById("listaCabalas").innerHTML = "<p>Error cargando cábalas</p>"
 
 }
 
@@ -665,138 +759,126 @@ alert("Error al publicar la cábala")
 
 function renderCabalas(cabalas){
 
+  // 🔥 1. ordenar por votos
+cabalas.sort((a, b) => (b.votos || 0) - (a.votos || 0))
+
+// 🔥 2. top + trending
 verCabalaTop(cabalas)
 verCabalasTrending(cabalas)
 
+// 3. contenedor
 const lista = document.getElementById("listaCabalas")
-
 lista.innerHTML = ""
 
-if(!cabalas.length){
-lista.innerHTML = "<p>No hay cábalas todavía. Sé el primero 🧿</p>"
-return
-}
-
+// 4. recorrer
 cabalas.forEach(c => {
 
-const li = document.createElement("div")
-li.className = "cabala-item"
-li.classList.add("fadeIn")
+  const li = document.createElement("div")
+  li.className = "cabala-item"
 
-const p = document.createElement("p")
-p.textContent = "🧿 " + c.username + ": " + c.descripcion
+  const p = document.createElement("p")
+  p.textContent = c.username + ": " + c.descripcion
 
-const votar = document.createElement("button")
-votar.textContent = "👍 " + (c.votos || 0)
+  // ================= BOTÓN VOTAR =================
+  const votar = document.createElement("button")
+  votar.textContent = "👍 " + (c.votos || 0)
+  // 🔒 desactivar si ya votó
+if(c.ya_voto){
+  votar.disabled = true
+  votar.textContent += " ✔"
+}
 
-votar.onclick = async function(){
+ votar.onclick = async function(){
 
-// 🚀 1. UPDATE UI INMEDIATO (optimista)
-c.votos = (c.votos || 0) + 1
-votar.textContent = "👍 " + c.votos
+  // UI optimista
+  c.votos = (c.votos || 0) + 1
+  votar.textContent = "👍 " + c.votos
+  sumarPuntos(1)
 
-sonidoGol.currentTime = 0
-sonidoGol.play().catch(()=>{})
+  sonidoGol.currentTime = 0
+  sonidoGol.play().catch(()=>{})
 
-try {
+  try {
 
-// 🛰️ 2. BACKEND EN PARALELO
-await fetch("/votar-cabala",{
-method:"POST",
-headers:{
-"Content-Type":"application/json"
-},
-body: JSON.stringify({ id: c.id })
+    const res = await fetch("/votar-cabala",{
+      method:"POST",
+      headers:{
+        "Content-Type":"application/json"
+      },
+      body: JSON.stringify({
+        id: c.id,
+        user_id: localStorage.getItem("user_id")
+      })
+    })
+
+    // 🔥 backend decide
+    if (!res.ok) {
+      throw new Error(await res.text())
+    }
+
+    // opcional: invalidar cache
+    cacheCabalas = null
+
+  } catch(e){
+
+    // rollback UI
+    c.votos--
+    votar.textContent = "👍 " + c.votos
+
+    alert(e.message || "Error al votar")
+
+  }
+
+}
+
+  // ================= BOTONES EXTRA =================
+
+  const compartir = document.createElement("button")
+  compartir.textContent = "Compartir"
+  compartir.onclick = function(){
+    compartirCabala(c.descripcion)
+  }
+
+  const invitar = document.createElement("button")
+  invitar.textContent = "Invitar amigos"
+  invitar.onclick = function(){
+    invitarVotarCabala(c.descripcion)
+  }
+
+  // contenedor acciones
+  const actions = document.createElement("div")
+  actions.style.display = "flex"
+  actions.style.gap = "10px"
+  actions.style.flexWrap = "wrap"
+
+  actions.appendChild(votar)
+  actions.appendChild(compartir)
+  actions.appendChild(invitar)
+
+  // render final
+  li.appendChild(p)
+  li.appendChild(actions)
+
+  lista.appendChild(li)
+
 })
-
-} catch(e){
-
-console.error(e)
-
-// ❌ rollback si falla
-c.votos--
-votar.textContent = "👍 " + c.votos
-
-alert("Error al votar")
-
 }
-
-}
-
-const compartir = document.createElement("button")
-compartir.textContent = "Compartir"
-compartir.onclick = function(){
-compartirCabala(c.descripcion)
-}
-
-const invitar = document.createElement("button")
-invitar.textContent = "Invitar amigos"
-invitar.onclick = function(){
-invitarVotarCabala(c.descripcion)
-}
-
-const actions = document.createElement("div")
-
-actions.style.display = "flex"
-actions.style.gap = "10px"
-
-actions.style.alignItems = "center"
-actions.style.flexWrap = "wrap"
-
-actions.appendChild(votar)
-actions.appendChild(compartir)
-actions.appendChild(invitar)
-
-li.appendChild(p)
-li.appendChild(actions)
-
-lista.appendChild(li)
-
-})
-
-}
-
-async function verCabalas(){
-
-try {
-
-const now = Date.now()
-
-if(cacheCabalas && (now - cacheTime < 10000)){
-  renderCabalas(cacheCabalas)
-  return
-}
-
-const res = await fetch("/cabalas")
-const cabalas = await res.json()
-
-cacheCabalas = cabalas
-cacheTime = now
-
-renderCabalas(cabalas)
-
-} catch (error) {
-
-console.error(error)
-document.getElementById("listaCabalas").innerHTML = "<p>Error cargando cábalas</p>"
-
-}
-
-}
-
+// ================= RANKING =================
 
 async function verRanking() {
- const res = await fetch("/ranking");
- const ranking = await res.json();
- const lista = document.getElementById("listaRanking");
 
- lista.innerHTML = ranking.map((r, i) => `
- <div class="ranking-item">
- <div class="rank-pos">${i + 1}</div>
- <div class="rank-name">${r.username}</div>
- <div class="rank-pts">${r.puntos || 0} PTS</div>
- </div>
- `).join('');
+const res = await fetch("/ranking")
+const ranking = await res.json()
+const lista = document.getElementById("listaRanking")
+
+lista.innerHTML = ranking.map((r, i) => `
+  <div class="ranking-item">
+    <div class="rank-pos">${i + 1}</div>
+    <div class="rank-name">${r.username}</div>
+    <div class="rank-pts">${r.puntos || 0} PTS</div>
+  </div>
+`).join('')
+
 }
 async function cargarSelectorPartidos(){
 
@@ -842,7 +924,7 @@ verCabalas()
 verRanking()
 verHinchasActivos()
 mostrarUsuario()
-
+mostrarNivel()
 
 }
 
@@ -888,7 +970,7 @@ function compartirCabala(texto){
 const tweet = encodeURIComponent(
 "Mi cábala para Argentina 🇦🇷:\n\n\"" +
 texto +
-"\"\n\n#Scaloneta #CabalaScaloneta\nhttps://cabala-scaloneta-1.onrender.com"
+"\"\n\n🔥 Si esta cábala llega a 50 votos, se cumple.\n\nVotá acá 👇\nhttps://cabala-scaloneta-1.onrender.com"
 )
 
 window.open(
@@ -945,6 +1027,15 @@ p.textContent =
 div.appendChild(p)
 
 })
+
+}
+
+function mostrarNivel(){
+
+const nivel = obtenerNivel(puntos)
+
+document.getElementById("nivelUsuario").innerText =
+"Nivel: " + nivel + " (" + puntos + " pts)"
 
 }
 

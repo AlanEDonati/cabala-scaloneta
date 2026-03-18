@@ -132,26 +132,29 @@ app.post("/cabalas", async (req, res) => {
 
 app.get("/cabalas", async (req,res)=>{
 
-try{
+  try{
 
-const result = await db.query(`
-SELECT cabalas.id, cabalas.descripcion, cabalas.votos, users.username
-FROM cabalas
-JOIN users
-ON cabalas.user_id = users.id
-ORDER BY cabalas.votos DESC
-`)
+    const result = await db.query(`
+      SELECT cabalas.id, cabalas.descripcion, cabalas.votos, users.username
+      FROM cabalas
+      LEFT JOIN users
+      ON cabalas.user_id = users.id
+      ORDER BY cabalas.votos DESC
+    `)
 
-res.json(result.rows)
+    res.json(result.rows)
 
-}catch(error){
+  }catch(error){
 
-console.error(error)
-res.status(500).send("Error obteniendo cábalas")
+    console.error("ERROR REAL:", error.message)
 
-}
+    res.status(500).json({
+      error: error.message
+    })
 
-})
+  }
+
+}) // 🔥 ESTE ERA EL QUE FALTABA
 
 app.post("/set-result", async (req, res) => {
     try {
@@ -197,24 +200,34 @@ app.post("/products", async (req, res) => {
     }
 });
 
-app.post("/votar-cabala", async (req,res)=>{
+app.post("/votar-cabala", async (req, res) => {
 
-try{
+  try {
 
-const {id} = req.body
+    const { id, user_id } = req.body
 
-await db.query(
-"UPDATE cabalas SET votos = votos + 1 WHERE id=$1",
-[id]
-)
+    // 1. intentar registrar voto (tabla votos)
+    await db.query(
+      "INSERT INTO votos (user_id, cabala_id) VALUES ($1, $2)",
+      [user_id, id]
+    )
 
-res.send("Voto registrado")
+    // 2. si pasa, sumamos voto
+    await db.query(
+      "UPDATE cabalas SET votos = votos + 1 WHERE id = $1",
+      [id]
+    )
 
-}catch(error){
+    res.json({ ok: true })
 
-console.error(error)
-res.status(500).send("Error votando cábala")
+  } catch (error) {
 
-}
+    // 🔥 caso: voto duplicado
+    if (error.code === "23505") {
+      return res.status(400).send("Ya votaste esta cábala")
+    }
 
+    console.error(error)
+ res.status(500).json({ error: "Error votando cábala" })
+  }
 })
