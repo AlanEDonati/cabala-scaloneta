@@ -78,6 +78,31 @@
         }
 
         cargarPartidosAdmin();
+
+        async function subirProducto() {
+    const name = document.getElementById("prodName").value;
+    const price = document.getElementById("prodPrice").value;
+    const image_url = document.getElementById("prodImg").value;
+    const category = document.getElementById("prodCat").value;
+
+    if (!name || !price || !image_url) return alert("Completá todos los campos, che.");
+
+    const res = await fetch("/products", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, price, image_url, category })
+    });
+
+    if (res.ok) {
+        alert("¡Producto cargado con éxito! Ya se ve en el Store.");
+        // Limpiamos los campos
+        document.getElementById("prodName").value = "";
+        document.getElementById("prodPrice").value = "";
+        document.getElementById("prodImg").value = "";
+    } else {
+        alert("Error al cargar el producto.");
+    }
+}
     </script>
 </body>
 </html>

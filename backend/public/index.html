@@ -435,37 +435,25 @@ margin:5px 0;
  <h2>Ranking de Hinchas 🏆</h2>
  <div id="listaRanking" class="ranking-container"></div>
 </div>
- 
  <div id="store" style="display:none" class="card">
-<h2>Tienda de la Scaloneta 🛍️</h2>
-<p style="text-align: center; font-size: 0.9em; opacity: 0.8;">Canjeá tus puntos o conseguí el Merch oficial</p>
-
- <div class="store-grid">
- <div class="product-card">
- <div class="badge">OFICIAL</div>
- <img src="img/camiseta-titular.png" alt="Camiseta" class="product-img">
- <h3>Camiseta Titular</h3>
- <p class="price">$89.999</p>
- <button class="btn-buy" onclick="comprar(1)">¡La quiero!</button>
- </div>
-
- <div class="product-card">
- <div class="badge">PREMIUM</div>
- <img src="img/gorra-afa.png" alt="Gorra" class="product-img">
- <h3>Gorra 3 Estrellas</h3>
- <p class="price">$15.500</p>
- <button class="btn-buy" onclick="comprar(2)">¡La quiero!</button>
-</div>
-
- <div class="product-card">
- <img src="https://www.adidas.com.ar/glass/images/t_pro_product_model_3_4_standard/f7468160914644028975aef100a8979c_9366/Pelota_Al_Rihla_League_Blanco_H57782_01_standard.jpg" alt="Pelota">
- <h3>Pelota Mundial</h3>
-<p class="price">$8.000 / 300 pts</p>
- <button onclick="comprar(2)">Comprar</button>
- </div>
- </div>
+    <h2>Tienda de la Scaloneta 🛍️</h2>
+    <p style="text-align: center; font-size: 0.9em; opacity: 0.8;">Canjeá tus puntos o conseguí el Merch oficial</p>
+    
+    <div class="store-grid"></div> 
 </div>
  
+<div id="modalGol" class="modal-overlay" style="display:none">
+ <div class="modal-content">
+ <img id="imgFestejo" src="messi.jpg" alt="GOL">
+ <div class="modal-text">
+ <h2 id="modalTitulo">¡VAMOS CARAJO!</h2>
+ <p id="modalMensaje">Tu cábala ha sido activada con éxito.</p>
+ <button onclick="cerrarModal()">Cerrar</button> </div>
+
+</div>
+</div>
+
+
 <script>
 
 let puntos = parseInt(localStorage.getItem("puntos")) || 0
@@ -579,11 +567,6 @@ async function enviarPrediccion() {
       throw new Error("Error al enviar predicción")
     }
 
-    mostrarModal(
-      "¡VAMOS ARGENTINA!", 
-      "Tu predicción fue enviada. ¡A cruzar los dedos!", 
-      "messi.jpg"
-    )
 
   } catch (error) {
     console.error(error)
@@ -591,12 +574,6 @@ async function enviarPrediccion() {
   }
 
 }
- // REEMPLAZO DEL ALERT POR EL MODAL PRO
-mostrarModal(
-"¡VAMOS ARGENTINA!", 
-"Tu predicción fue enviada. ¡A cruzar los dedos!", 
- "messi.jpg"
- );
 
 
 async function mostrarSeccion(seccion) {
@@ -925,6 +902,7 @@ verRanking()
 verHinchasActivos()
 mostrarUsuario()
 mostrarNivel()
+cargarStore()
 
 }
 
@@ -1039,18 +1017,25 @@ document.getElementById("nivelUsuario").innerText =
 
 }
 
+async function cargarStore() {
+    const res = await fetch("/products");
+    const productos = await res.json();
+    const contenedor = document.querySelector(".store-grid");
+
+    if (!contenedor) return;
+
+    contenedor.innerHTML = productos.map(p => `
+        <div class="product-card">
+            <div class="badge">${p.category.toUpperCase()}</div>
+            <img src="${p.image_url}" alt="${p.name}" class="product-img">
+            <h3>${p.name}</h3>
+            <p class="price">$${Number(p.price).toLocaleString('es-AR')}</p>
+            <button class="btn-buy" onclick="comprar(${p.id})">¡La quiero!</button>
+        </div>
+    `).join('');
+}
+
 </script>
-
-<div id="modalGol" class="modal-overlay" style="display:none">
- <div class="modal-content">
- <img id="imgFestejo" src="messi.jpg" alt="GOL">
- <div class="modal-text">
- <h2 id="modalTitulo">¡VAMOS CARAJO!</h2>
- <p id="modalMensaje">Tu cábala ha sido activada con éxito.</p>
- <button onclick="cerrarModal()">Cerrar</button> </div>
-
-</div>
-</div>
 
 
 </body>
