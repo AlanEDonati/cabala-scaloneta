@@ -1025,27 +1025,43 @@ document.getElementById("nivelUsuario").innerText =
 }
 
 async function cargarStore() {
-    const res = await fetch("/products");
-    const productos = await res.json();
-    const contenedor = document.querySelector(".store-grid");
+    try {
+        const res = await fetch("/products");
+        const productos = await res.json();
+        const contenedor = document.querySelector(".store-grid");
 
-    if (!contenedor) return;
+        if (!contenedor) return;
 
-    // Limpiamos el contenedor antes de llenarlo
-    contenedor.innerHTML = ""; 
+        // 1. Limpiamos por completo para que no se duplique nada
+        contenedor.innerHTML = ""; 
 
-    contenedor.innerHTML = productos.map(p => `
-        <div class="product-card">
-            <div class="badge">${p.category ? p.category.toUpperCase() : 'OFICIAL'}</div>
-            
-            <img src="${p.image_url}" alt="${p.name}" class="product-img" onerror="this.src='https://placehold.co/400x400?text=Sin+Imagen'">
-            
-            <h3 style="margin-top: 10px;">${p.name}</h3>
-            
-            <p class="price">$${Number(p.price).toLocaleString('es-AR')}</p>
-            <button class="btn-buy" onclick="comprar(${p.id})">¡LA QUIERO!</button>
-        </div>
-    `).join('');
+        // 2. Usamos un bucle más limpio (forEach)
+        productos.forEach(p => {
+            const card = document.createElement("div");
+            card.className = "product-card";
+
+            card.innerHTML = `
+                <div class="badge">${p.category ? p.category.toUpperCase() : 'OFICIAL'}</div>
+                
+                <img src="${p.image_url}" 
+                     alt="${p.name}" 
+                     class="product-img" 
+                     style="width: 100%; height: 180px; object-fit: contain; margin-bottom: 10px;"
+                     onerror="this.src='https://placehold.co/400x400?text=Link+Roto+o+Bloqueado'">
+                
+                <h3 style="margin: 10px 0; font-size: 1.1rem;">${p.name}</h3>
+                <p class="price" style="color: #D4AF37; font-weight: bold; font-size: 1.2rem;">
+                    $${Number(p.price).toLocaleString('es-AR')}
+                </p>
+                <button class="btn-buy" onclick="comprar(${p.id})" style="width: 100%; margin-top: auto;">
+                    ¡LA QUIERO!
+                </button>
+            `;
+            contenedor.appendChild(card);
+        });
+    } catch (error) {
+        console.error("Error cargando productos:", error);
+    }
 }
 
 </script>
