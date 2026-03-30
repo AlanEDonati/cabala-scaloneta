@@ -928,12 +928,38 @@ function cerrarModal() {
 }
 
 
-function comprar(id) {
- // Acá podrías conectar con una API de pagos o simplemente un alert
-alert("¡Buena elección, Colo! Producto añadido al carrito.");
- console.log("Comprando producto ID:", id);
-}
+async function comprar(id) {
+    try {
+        // 1. Buscamos la lista de productos para saber cuál eligió
+        const res = await fetch("/products");
+        const productos = await res.json();
+        const producto = productos.find(p => p.id === id);
 
+        if (!producto) {
+            alert("No pudimos encontrar ese producto. ¡Intentá de nuevo!");
+            return;
+        }
+
+        // 2. Datos de configuración
+        const nombreUsuario = localStorage.getItem("username") || "Un hincha";
+        const miTelefono = "5492324687099"; // Tu número sin el +
+
+        // 3. Armamos el mensaje para que te llegue a vos
+        const mensaje = encodeURIComponent(
+            `¡Hola! Soy *${nombreUsuario}* y quiero una cábala ganadora 🇦🇷\n\n` +
+            `📦 *Pedido:* ${producto.name}\n` +
+            `💰 *Precio:* $${Number(producto.price).toLocaleString('es-AR')}\n\n` +
+            `¿Cómo coordinamos el pago y el envío?`
+        );
+
+        // 4. Abrimos WhatsApp en una pestaña nueva
+        window.open(`https://wa.me/${miTelefono}?text=${mensaje}`, "_blank");
+
+    } catch (error) {
+        console.error("Error al procesar la compra:", error);
+        alert("Hubo un problema al conectar con la tienda. Revisá tu conexión.");
+    }
+}
 
 function verCabalaTop(cabalas){
 
@@ -1026,7 +1052,8 @@ document.getElementById("nivelUsuario").innerText =
 
 async function cargarStore() {
     try {
-        const res = await fetch("/products");
+       // Agregamos ?t= y la hora actual para que no use la memoria vieja
+const res = await fetch(`/products?t=${new Date().getTime()}`);
         const productos = await res.json();
         const contenedor = document.querySelector(".store-grid");
 
