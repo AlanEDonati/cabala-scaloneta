@@ -200,6 +200,18 @@ app.post("/products", async (req, res) => {
     }
 });
 
+// RUTA PARA ELIMINAR PRODUCTOS
+app.delete("/products/:id", async (req, res) => {
+    try {
+        const { id } = req.params;
+        await pool.query("DELETE FROM products WHERE id = $1", [id]);
+        res.json({ message: "Producto eliminado con éxito" });
+    } catch (err) {
+        console.error(err);
+        res.status(500).send("Error al eliminar el producto");
+    }
+});
+
 app.post("/votar-cabala", async (req, res) => {
 
   try {

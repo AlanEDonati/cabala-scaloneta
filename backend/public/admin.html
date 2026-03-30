@@ -44,6 +44,14 @@
         </button>
     </div>
 
+<div class="container" style="margin-top: 30px;">
+    <h2>🛒 Gestionar Productos del Store</h2>
+    <p>Acá podés ver lo que hay cargado y borrar los que tengan links rotos.</p>
+    <div id="lista-productos-admin" class="admin-card">
+        Cargando productos...
+    </div>
+</div>
+
     <script>
         // Cargar los partidos al inicio
         async function cargarPartidosAdmin() {
@@ -93,16 +101,75 @@
         body: JSON.stringify({ name, price, image_url, category })
     });
 
-    if (res.ok) {
+  if (res.ok) {
         alert("¡Producto cargado con éxito! Ya se ve en el Store.");
-        // Limpiamos los campos
+        
+        // 1. Limpiamos los campos del formulario
         document.getElementById("prodName").value = "";
         document.getElementById("prodPrice").value = "";
         document.getElementById("prodImg").value = "";
+        
+        // 2. LLAMAMOS A LA LISTA (Para que aparezca el nuevo producto abajo con su botón de borrar)
+        listarProductosAdmin(); 
+        
     } else {
         alert("Error al cargar el producto.");
     }
+
+// Función para listar los productos y ponerles el botón de eliminar
+async function listarProductosAdmin() {
+    try {
+        const res = await fetch("/products");
+        const productos = await res.json();
+        const lista = document.getElementById("lista-productos-admin");
+        
+        lista.innerHTML = ""; // Limpiamos
+
+        if (productos.length === 0) {
+            lista.innerHTML = "<p>No hay productos en el store.</p>";
+            return;
+        }
+
+        productos.forEach(p => {
+            const div = document.createElement("div");
+            div.style = "border-bottom: 1px solid #444; padding: 15px; display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.05); margin-bottom: 5px; border-radius: 8px;";
+            div.innerHTML = `
+                <div>
+                    <span style="color: #d4ac0d; font-weight: bold;">${p.name}</span> 
+                    <br>
+                    <small style="color: #ccc;">$${Number(p.price).toLocaleString('es-AR')}</small>
+                </div>
+                <button onclick="eliminarProducto(${p.id})" style="background: #ff4444; color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; font-size: 0.8rem;">
+                    ELIMINAR
+                </button>
+            `;
+            lista.appendChild(div);
+        });
+    } catch (error) {
+        console.error("Error al listar:", error);
+    }
 }
+
+// Función que manda la orden de borrar al servidor
+async function eliminarProducto(id) {
+    if (!confirm("¿Seguro que querés borrar este producto? No se puede deshacer.")) return;
+
+    try {
+        const res = await fetch(`/products/${id}`, { method: "DELETE" });
+        if (res.ok) {
+            alert("¡Producto eliminado!");
+            listarProductosAdmin(); // Refrescamos la lista sin recargar la página
+        } else {
+            alert("No se pudo borrar el producto.");
+        }
+    } catch (error) {
+        console.error("Error:", error);
+    }
+}
+
+// Llamamos a la función cuando carga la página para ver la lista inicial
+listarProductosAdmin();
+
     </script>
 </body>
 </html>
