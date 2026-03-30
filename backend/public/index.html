@@ -169,15 +169,21 @@
 
         /* Tarjeta de producto individual */
         .product-card {
-            background: rgba(255, 255, 255, 0.08);
-            border-radius: 15px;
-            padding: 15px;
-            text-align: center;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            transition: transform 0.3s ease;
-            position: relative;
-            overflow: hidden;
-        }
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 15px;
+    padding: 20px; /* Un poquito más de espacio interno */
+    text-align: center;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: transform 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    
+    /* AGREGAMOS ESTO PARA ORDENAR EL CONTENIDO */
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between; /* Empuja el botón al fondo y la imagen arriba */
+    min-height: 380px; /* Asegura que todas las tarjetas midan lo mismo */
+}
 
         .product-card:hover {
             transform: translateY(-5px);
@@ -185,12 +191,13 @@
         }
 
         .product-card img {
-            width: 100%;
-            height: 120px;
-            object-fit: contain;
-            margin-bottom: 10px;
-            border-radius: 10px;
-        }
+    width: 100%;
+    height: 180px; /* Un poquito más alta para que se luzca */
+    object-fit: contain;
+    margin-bottom: 15px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.05); /* Un fondito suave por si la foto es chica */
+}
 
         .product-card h3 {
             font-size: 1rem;
@@ -1024,13 +1031,19 @@ async function cargarStore() {
 
     if (!contenedor) return;
 
+    // Limpiamos el contenedor antes de llenarlo
+    contenedor.innerHTML = ""; 
+
     contenedor.innerHTML = productos.map(p => `
         <div class="product-card">
-            <div class="badge">${p.category.toUpperCase()}</div>
-            <img src="${p.image_url}" alt="${p.name}" class="product-img">
-            <h3>${p.name}</h3>
+            <div class="badge">${p.category ? p.category.toUpperCase() : 'OFICIAL'}</div>
+            
+            <img src="${p.image_url}" alt="${p.name}" class="product-img" onerror="this.src='https://placehold.co/400x400?text=Sin+Imagen'">
+            
+            <h3 style="margin-top: 10px;">${p.name}</h3>
+            
             <p class="price">$${Number(p.price).toLocaleString('es-AR')}</p>
-            <button class="btn-buy" onclick="comprar(${p.id})">¡La quiero!</button>
+            <button class="btn-buy" onclick="comprar(${p.id})">¡LA QUIERO!</button>
         </div>
     `).join('');
 }
