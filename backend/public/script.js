@@ -256,7 +256,12 @@ async function cargarPartidos() {
         const res = await fetch(`${API_BASE_URL}/matches`);
         const matches = await res.json();
         const lista = document.getElementById("listaPartidos");
-        if (lista) lista.innerHTML = matches.map(m => `<li>${m.team_a} vs ${m.team_b}</li>`).join('');
+if (lista) lista.innerHTML = matches.map(m => `
+    <li>
+        <strong>${m.team_a} vs ${m.team_b}</strong> 
+        <small>(${new Date(m.match_date).toLocaleDateString()})</small>
+    </li>
+`).join('');
     } catch (e) {}
 }
 
