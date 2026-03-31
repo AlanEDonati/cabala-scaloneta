@@ -245,3 +245,21 @@ app.post("/votar-cabala", async (req, res) => {
  res.status(500).json({ error: "Error votando cábala" })
   }
 })
+
+// RUTA PARA EDITAR UN PRODUCTO
+app.put("/products/:id", async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { name, price, image_url, category } = req.body;
+        
+        await db.query(
+            "UPDATE products SET name = $1, price = $2, image_url = $3, category = $4 WHERE id = $5",
+            [name, price, image_url, category, id]
+        );
+        
+        res.json({ message: "Producto actualizado con éxito" });
+    } catch (err) {
+        console.error(err);
+        res.status(500).send("Error al editar el producto");
+    }
+});

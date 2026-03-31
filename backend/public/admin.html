@@ -53,125 +53,152 @@
 </div>
 
     <script>
-        // Cargar los partidos al inicio
-        async function cargarPartidosAdmin() {
-            const res = await fetch("/matches");
-            const partidos = await res.json();
-            const select = document.getElementById("matchSelectAdmin");
-            partidos.forEach(m => {
-                const opt = document.createElement("option");
-                opt.value = m.id;
-                opt.innerText = `${m.team_a} vs ${m.team_b} ${m.score_a !== null ? '(Ya tiene resultado)' : ''}`;
-                select.appendChild(opt);
+    // --- VARIABLES GLOBALES ---
+    let editandoID = null; // Si es null, estamos creando. Si tiene un ID, estamos editando.
+
+    // --- FUNCIONES DE PRODUCTOS (EDICIÓN Y CARGA) ---
+
+    // Esta función sube los datos al formulario para editar
+    function prepararEdicion(p) {
+        document.getElementById("prodName").value = p.name;
+        document.getElementById("prodPrice").value = p.price;
+        document.getElementById("prodImg").value = p.image_url;
+        document.getElementById("prodCat").value = p.category;
+        
+        editandoID = p.id; // Guardamos el ID que estamos editando
+        
+        const btn = document.querySelector("button[onclick='subirProducto()']");
+        btn.innerText = "💾 GUARDAR CAMBIOS";
+        btn.style.background = "#28a745"; // Verde para avisar que es edición
+        
+        window.scrollTo(0, 0); // Sube al formulario
+    }
+
+    async function subirProducto() {
+        const name = document.getElementById("prodName").value;
+        const price = document.getElementById("prodPrice").value;
+        const image_url = document.getElementById("prodImg").value;
+        const category = document.getElementById("prodCat").value;
+
+        if (!name || !price || !image_url) return alert("Completá todos los campos, che.");
+
+        // Si editandoID tiene algo, usamos PUT (editar). Si no, POST (crear).
+        const url = editandoID ? `/products/${editandoID}` : "/products";
+        const metodo = editandoID ? "PUT" : "POST";
+
+        try {
+            const res = await fetch(url, {
+                method: metodo,
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ name, price, image_url, category })
             });
-        }
 
-        async function guardarResultadoFinal() {
-            const match_id = document.getElementById("matchSelectAdmin").value;
-            const score_a = document.getElementById("finalScoreA").value;
-            const score_b = document.getElementById("finalScoreB").value;
-
-            if(score_a === "" || score_b === "") return alert("Faltan los goles, socio");
-
-            const res = await fetch("/set-result", {
-                method: "POST",
-                headers: {"Content-Type": "application/json"},
-                body: JSON.stringify({ match_id, score_a, score_b })
-            });
-
-            if(res.ok) {
-                alert("¡Resultado guardado! Los puntos se actualizaron en el Ranking.");
-                location.reload();
+            if (res.ok) {
+                alert(editandoID ? "¡Producto actualizado!" : "¡Producto cargado con éxito!");
+                
+                // Limpiamos todo y reseteamos el modo edición
+                editandoID = null;
+                document.getElementById("prodName").value = "";
+                document.getElementById("prodPrice").value = "";
+                document.getElementById("prodImg").value = "";
+                
+                const btn = document.querySelector("button[onclick='subirProducto()']");
+                btn.innerText = "Publicar en el Store";
+                btn.style.background = ""; // Vuelve al color original
+                
+                listarProductosAdmin(); 
+            } else {
+                alert("Error al procesar el producto.");
             }
+        } catch (error) {
+            console.error("Error:", error);
         }
-
-        cargarPartidosAdmin();
-
-        async function subirProducto() {
-    const name = document.getElementById("prodName").value;
-    const price = document.getElementById("prodPrice").value;
-    const image_url = document.getElementById("prodImg").value;
-    const category = document.getElementById("prodCat").value;
-
-    if (!name || !price || !image_url) return alert("Completá todos los campos, che.");
-
-    const res = await fetch("/products", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, price, image_url, category })
-    });
-
-  if (res.ok) {
-        alert("¡Producto cargado con éxito! Ya se ve en el Store.");
-        
-        // 1. Limpiamos los campos del formulario
-        document.getElementById("prodName").value = "";
-        document.getElementById("prodPrice").value = "";
-        document.getElementById("prodImg").value = "";
-        
-        // 2. LLAMAMOS A LA LISTA (Para que aparezca el nuevo producto abajo con su botón de borrar)
-        listarProductosAdmin(); 
-        
-    } else {
-        alert("Error al cargar el producto.");
     }
+
+    async function listarProductosAdmin() {
+        try {
+            const res = await fetch("/products");
+            const productos = await res.json();
+            const lista = document.getElementById("lista-productos-admin");
+            lista.innerHTML = ""; 
+
+            if (productos.length === 0) {
+                lista.innerHTML = "<p>No hay productos en el store.</p>";
+                return;
+            }
+
+            productos.forEach(p => {
+                const div = document.createElement("div");
+                div.style = "border-bottom: 1px solid #444; padding: 15px; display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.05); margin-bottom: 5px; border-radius: 8px;";
+                
+                const productoJSON = JSON.stringify(p).replace(/"/g, '&quot;');
+
+                div.innerHTML = `
+                    <div>
+                        <span style="color: #d4ac0d; font-weight: bold;">${p.name}</span> 
+                        <br>
+                        <small style="color: #ccc;">$${Number(p.price).toLocaleString('es-AR')}</small>
+                    </div>
+                    <div style="display: flex; gap: 8px;">
+                        <button onclick="prepararEdicion(${productoJSON})" style="background: #2196F3; color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; font-size: 0.8rem;">
+                            EDITAR
+                        </button>
+                        <button onclick="eliminarProducto(${p.id})" style="background: #ff4444; color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; font-size: 0.8rem;">
+                            ELIMINAR
+                        </button>
+                    </div>
+                `;
+                lista.appendChild(div);
+            });
+        } catch (error) {
+            console.error("Error al listar:", error);
         }
-
-        
-// Función para listar los productos y ponerles el botón de eliminar
-async function listarProductosAdmin() {
-    try {
-        const res = await fetch("/products");
-        const productos = await res.json();
-        const lista = document.getElementById("lista-productos-admin");
-        
-        lista.innerHTML = ""; // Limpiamos
-
-        if (productos.length === 0) {
-            lista.innerHTML = "<p>No hay productos en el store.</p>";
-            return;
-        }
-
-        productos.forEach(p => {
-            const div = document.createElement("div");
-            div.style = "border-bottom: 1px solid #444; padding: 15px; display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.05); margin-bottom: 5px; border-radius: 8px;";
-            div.innerHTML = `
-                <div>
-                    <span style="color: #d4ac0d; font-weight: bold;">${p.name}</span> 
-                    <br>
-                    <small style="color: #ccc;">$${Number(p.price).toLocaleString('es-AR')}</small>
-                </div>
-                <button onclick="eliminarProducto(${p.id})" style="background: #ff4444; color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; font-size: 0.8rem;">
-                    ELIMINAR
-                </button>
-            `;
-            lista.appendChild(div);
-        });
-    } catch (error) {
-        console.error("Error al listar:", error);
     }
-}
 
-// Función que manda la orden de borrar al servidor
-async function eliminarProducto(id) {
-    if (!confirm("¿Seguro que querés borrar este producto? No se puede deshacer.")) return;
-
-    try {
+    async function eliminarProducto(id) {
+        if (!confirm("¿Seguro que querés borrar este producto?")) return;
         const res = await fetch(`/products/${id}`, { method: "DELETE" });
         if (res.ok) {
             alert("¡Producto eliminado!");
-            listarProductosAdmin(); // Refrescamos la lista sin recargar la página
-        } else {
-            alert("No se pudo borrar el producto.");
+            listarProductosAdmin();
         }
-    } catch (error) {
-        console.error("Error:", error);
     }
-}
 
-// Llamamos a la función cuando carga la página para ver la lista inicial
-listarProductosAdmin();
+    // --- FUNCIONES DE PARTIDOS ---
 
-    </script>
+    async function cargarPartidosAdmin() {
+        const res = await fetch("/matches");
+        const partidos = await res.json();
+        const select = document.getElementById("matchSelectAdmin");
+        partidos.forEach(m => {
+            const opt = document.createElement("option");
+            opt.value = m.id;
+            opt.innerText = `${m.team_a} vs ${m.team_b} ${m.score_a !== null ? '(Ya tiene resultado)' : ''}`;
+            select.appendChild(opt);
+        });
+    }
+
+    async function guardarResultadoFinal() {
+        const match_id = document.getElementById("matchSelectAdmin").value;
+        const score_a = document.getElementById("finalScoreA").value;
+        const score_b = document.getElementById("finalScoreB").value;
+        if(score_a === "" || score_b === "") return alert("Faltan los goles, socio");
+
+        const res = await fetch("/set-result", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({ match_id, score_a, score_b })
+        });
+
+        if(res.ok) {
+            alert("¡Resultado guardado!");
+            location.reload();
+        }
+    }
+
+    // --- INICIO AL CARGAR ---
+    cargarPartidosAdmin();
+    listarProductosAdmin();
+</script>
 </body>
 </html>
