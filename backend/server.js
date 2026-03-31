@@ -130,31 +130,24 @@ app.post("/cabalas", async (req, res) => {
     }
 });
 
-app.get("/cabalas", async (req,res)=>{
-
-  try{
-
+app.get("/cabalas", async (req, res) => {
+  try {
     const result = await db.query(`
-      SELECT cabalas.id, cabalas.descripcion, cabalas.votos, users.username
+      SELECT 
+        cabalas.id, 
+        cabalas.descripcion, 
+        COALESCE(cabalas.votos, 0) as votos, 
+        users.username 
       FROM cabalas
-      LEFT JOIN users
-      ON cabalas.user_id = users.id
+      LEFT JOIN users ON cabalas.user_id = users.id
       ORDER BY cabalas.votos DESC
-    `)
-
-    res.json(result.rows)
-
-  }catch(error){
-
-    console.error("ERROR REAL:", error.message)
-
-    res.status(500).json({
-      error: error.message
-    })
-
+    `);
+    res.json(result.rows);
+  } catch (error) {
+    console.error("ERROR EN GET CABALAS:", error.message);
+    res.status(500).json({ error: error.message });
   }
-
-}) // 🔥 ESTE ERA EL QUE FALTABA
+});// 🔥 ESTE ERA EL QUE FALTABA
 
 app.post("/set-result", async (req, res) => {
     try {
