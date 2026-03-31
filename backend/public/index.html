@@ -1044,157 +1044,185 @@ if (!res.ok) {
 
 // ================= FETCH CABALAS =================
 
-async function verCabalas(){
+// ================= FETCH CABALAS CORREGIDO =================
+async function verCabalas() {
+    const listaContenedor = document.getElementById("listaCabalas");
+    listaContenedor.innerHTML = "<p>Cargando cábalas del vestuario...</p>";
 
-document.getElementById("listaCabalas").innerHTML = "Cargando cábalas..."
+    try {
+        const res = await fetch("/cabalas");
 
-try {
+        if (!res.ok) {
+            throw new Error("No se pudo conectar con el servidor");
+        }
 
-  const now = Date.now()
+        const cabalas = await res.json();
 
-if(cacheCabalas){
+        // Validar que sea un array y no esté vacío
+        if (!Array.isArray(cabalas) || cabalas.length === 0) {
+            listaContenedor.innerHTML = "<p>¡No hay cábalas aún! Sé el primero en publicar una.</p>";
+            // Limpiar los tops si no hay datos
+            document.getElementById("cabalaTop").innerHTML = "";
+            document.getElementById("cabalasTrending").innerHTML = "";
+            return;
+        }
 
-  // 1. render inmediato
-  renderCabalas(cacheCabalas)
+        cacheCabalas = cabalas;
+        renderCabalas(cabalas);
 
-  // 2. actualizar en segundo plano
-  fetch("/cabalas")
-    .then(res => res.json())
-    .then(data => {
-      cacheCabalas = data
-      renderCabalas(data)
-    })
-    .catch(()=>{})
-
-  return
-}
-const res = await fetch("/cabalas")
-
-if (!res.ok) {
-  throw new Error("Error al obtener cábalas")
-}
-
-const cabalas = await res.json()
-
-  cacheCabalas = cabalas
-  cacheTime = now
-
-  renderCabalas(cabalas)
-
-} catch (error) {
-
-  console.error(error)
-  document.getElementById("listaCabalas").innerHTML = "<p>Error cargando cábalas</p>"
-
+    } catch (error) {
+        console.error("Error en verCabalas:", error);
+        listaContenedor.innerHTML = `
+            <div style="text-align:center; padding: 20px;">
+                <p>⚠️ Error cargando cábalas</p>
+                <button onclick="verCabalas()" style="font-size:12px; padding:5px 10px;">Reintentar</button>
+            </div>`;
+    }
 }
 
+function renderCabalas(cabalas) {
+    // 1. Ordenar por votos de mayor a menor
+    const cabalasOrdenadas = [...cabalas].sort((a, b) => (b.votos || 0) - (a.votos || 0));
+
+    // 2. Actualizar Top y Trending
+    verCabalaTop(cabalasOrdenadas);
+    verCabalasTrending(cabalasOrdenadas);
+
+    // 3. Renderizar la lista principal
+    const lista = document.getElementById("listaCabalas");
+    lista.innerHTML = "";
+
+    cabalasOrdenadas.forEach(c => {
+        const item = document.createElement("div");
+        item.className = "cabala-item fadeIn";
+
+        // Protección contra datos nulos o indefinidos
+        const usuario = c.username || "Anónimo";
+        const texto = c.descripcion || "Cábala secreta";
+        const votos = c.votos || 0;
+
+        item.innerHTML = `
+            <p><strong>${usuario}:</strong> ${texto}</p>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <button onclick="votarCabalaLocal(${c.id}, this)" ${c.ya_voto ? 'disabled' : ''}>
+                    👍 ${votos} ${c.ya_voto ? '✔' : ''}
+                </button>
+                <button onclick="compartirCabala('${texto.replace(/'/g, "\\'")}')">Compartir</button>
+                <button onclick="invitarVotarCabala('${texto.replace(/'/g, "\\'")}')">WhatsApp</button>
+            </div>
+        `;
+        lista.appendChild(item);
+    });
 }
 
-function renderCabalas(cabalas){
+function renderCabalas(cabalas) {
+    // 1. Validar que tengamos datos para evitar que el script explote
+    if (!cabalas || !Array.isArray(cabalas)) {
+        console.error("Los datos de cábalas no son válidos");
+        return;
+    }
 
-  // 🔥 1. ordenar por votos
-cabalas.sort((a, b) => (b.votos || 0) - (a.votos || 0))
+    // 2. 🔥 Ordenar por votos (Creamos una copia para no mutar el original si no es necesario)
+    const cabalasOrdenadas = [...cabalas].sort((a, b) => (b.votos || 0) - (a.votos || 0));
 
-// 🔥 2. top + trending
-verCabalaTop(cabalas)
-verCabalasTrending(cabalas)
+    // 3. 🔥 Actualizar componentes de Top y Trending
+    // Asegurate que estas funciones existan en tu código
+    if (typeof verCabalaTop === "function") verCabalaTop(cabalasOrdenadas);
+    if (typeof verCabalasTrending === "function") verCabalasTrending(cabalasOrdenadas);
 
-// 3. contenedor
-const lista = document.getElementById("listaCabalas")
-lista.innerHTML = ""
+    // 4. Limpiar y preparar el contenedor principal
+    const lista = document.getElementById("listaCabalas");
+    if (!lista) return; 
+    lista.innerHTML = "";
 
-// 4. recorrer
-cabalas.forEach(c => {
+    // 5. Recorrer y renderizar
+    cabalasOrdenadas.forEach(c => {
+        const item = document.createElement("div");
+        item.className = "cabala-item fadeIn"; // Agregamos tu clase de animación
 
-  const li = document.createElement("div")
-  li.className = "cabala-item"
+        // Sanitización básica de datos
+        const autor = c.username || "Hincha Anónimo";
+        const texto = c.descripcion || "Cábala sin descripción";
+        const totalVotos = c.votos || 0;
 
-  const p = document.createElement("p")
-  p.textContent = c.username + ": " + c.descripcion
+        const p = document.createElement("p");
+        p.innerHTML = `<strong>${autor}:</strong> ${texto}`;
 
-  // ================= BOTÓN VOTAR =================
-  const votar = document.createElement("button")
-  votar.textContent = "👍 " + (c.votos || 0)
-  // 🔒 desactivar si ya votó
-if(c.ya_voto){
-  votar.disabled = true
-  votar.textContent += " ✔"
-}
+        // ================= BOTÓN VOTAR =================
+        const votar = document.createElement("button");
+        votar.innerHTML = `👍 <span>${totalVotos}</span> ${c.ya_voto ? '✔' : ''}`;
+        
+        if (c.ya_voto) {
+            votar.disabled = true;
+            votar.style.opacity = "0.7";
+        }
 
- votar.onclick = async function(){
+        votar.onclick = async function() {
+            // UI Optimista: Actualizamos antes de que responda el server
+            const spanVotos = votar.querySelector("span");
+            c.votos = totalVotos + 1;
+            spanVotos.textContent = c.votos;
+            votar.disabled = true;
+            
+            if (typeof sumarPuntos === "function") sumarPuntos(1);
 
-  // UI optimista
-  c.votos = (c.votos || 0) + 1
-  votar.textContent = "👍 " + c.votos
-  sumarPuntos(1)
+            // Sonido de gol (con manejo de error por si el navegador bloquea audio)
+            if (window.sonidoGol) {
+                sonidoGol.currentTime = 0;
+                sonidoGol.play().catch(() => console.log("Audio bloqueado por el navegador"));
+            }
 
-  sonidoGol.currentTime = 0
-  sonidoGol.play().catch(()=>{})
+            try {
+                const res = await fetch("/votar-cabala", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        id: c.id,
+                        user_id: localStorage.getItem("user_id")
+                    })
+                });
 
-  try {
+                if (!res.ok) {
+                    const errorMsg = await res.text();
+                    throw new Error(errorMsg || "Error al procesar el voto");
+                }
 
-    const res = await fetch("/votar-cabala",{
-      method:"POST",
-      headers:{
-        "Content-Type":"application/json"
-      },
-      body: JSON.stringify({
-        id: c.id,
-        user_id: localStorage.getItem("user_id")
-      })
-    })
+                // Si todo sale bien, marcamos como votado definitivamente
+                votar.innerHTML = `👍 <span>${c.votos}</span> ✔`;
+                cacheCabalas = null; // Invalidar caché para próxima carga
 
-    // 🔥 backend decide
-    if (!res.ok) {
-      throw new Error(await res.text())
-    }
+            } catch (e) {
+                // Rollback UI: Si falla, volvemos atrás
+                c.votos = totalVotos;
+                spanVotos.textContent = totalVotos;
+                votar.disabled = false;
+                alert(e.message || "No se pudo registrar tu voto");
+            }
+        };
 
-    // opcional: invalidar cache
-    cacheCabalas = null
+        // ================= BOTONES EXTRA =================
+        const actions = document.createElement("div");
+        actions.style.display = "flex";
+        actions.style.gap = "10px";
+        actions.style.marginTop = "10px";
+        actions.style.flexWrap = "wrap";
 
-  } catch(e){
+        const btnCompartir = document.createElement("button");
+        btnCompartir.textContent = "Compartir";
+        btnCompartir.className = "btn-filter"; // Usando tus estilos de botones
+        btnCompartir.onclick = () => compartirCabala(texto);
 
-    // rollback UI
-    c.votos--
-    votar.textContent = "👍 " + c.votos
+        const btnInvitar = document.createElement("button");
+        btnInvitar.textContent = "WhatsApp";
+        btnInvitar.className = "btn-filter";
+        btnInvitar.onclick = () => invitarVotarCabala(texto);
 
-    alert(e.message || "Error al votar")
+        actions.append(votar, btnCompartir, btnInvitar);
 
-  }
-
-}
-
-  // ================= BOTONES EXTRA =================
-
-  const compartir = document.createElement("button")
-  compartir.textContent = "Compartir"
-  compartir.onclick = function(){
-    compartirCabala(c.descripcion)
-  }
-
-  const invitar = document.createElement("button")
-  invitar.textContent = "Invitar amigos"
-  invitar.onclick = function(){
-    invitarVotarCabala(c.descripcion)
-  }
-
-  // contenedor acciones
-  const actions = document.createElement("div")
-  actions.style.display = "flex"
-  actions.style.gap = "10px"
-  actions.style.flexWrap = "wrap"
-
-  actions.appendChild(votar)
-  actions.appendChild(compartir)
-  actions.appendChild(invitar)
-
-  // render final
-  li.appendChild(p)
-  li.appendChild(actions)
-
-  lista.appendChild(li)
-
-})
+        // Ensamble final
+        item.append(p, actions);
+        lista.appendChild(item);
+    });
 }
 // ================= RANKING =================
 
