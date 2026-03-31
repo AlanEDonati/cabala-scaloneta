@@ -329,3 +329,42 @@ function verCabalasTrending(cabalas) {
         div.appendChild(p);
     });
 }
+
+// ================= GUARDAR PREDICCIÓN (FALTANTE) =================
+async function guardarPrediccion() {
+    const userId = localStorage.getItem("user_id");
+    const matchId = document.getElementById("matchSelect").value;
+    
+    // Asegurate de que en tu HTML los inputs de goles tengan id="scoreA" e id="scoreB"
+    const scoreA = document.getElementById("scoreA")?.value; 
+    const scoreB = document.getElementById("scoreB")?.value;
+
+    if (!userId) return alert("⚠️ Create un usuario en el Inicio primero.");
+    if (scoreA === "" || scoreB === "") return alert("⚠️ Poné los goles, ¡no seas pecho frío!");
+
+    try {
+        const res = await fetch(`${API_BASE_URL}/predictions`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                user_id: userId,
+                match_id: matchId,
+                score_a: parseInt(scoreA),
+                score_b: parseInt(scoreB)
+            })
+        });
+
+        if (res.ok) {
+            alert("✅ ¡Predicción guardada! Sumaste puntos por participar.");
+            sumarPuntos(5);
+            // Limpiamos los inputs
+            document.getElementById("scoreA").value = "";
+            document.getElementById("scoreB").value = "";
+        } else {
+            const errorMsg = await res.text();
+            alert("❌ " + (errorMsg || "Ya enviaste una predicción para este partido."));
+        }
+    } catch (e) {
+        alert("❌ Error de conexión con el servidor.");
+    }
+}
