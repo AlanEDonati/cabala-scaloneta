@@ -1070,12 +1070,20 @@ async function verCabalas() {
         cacheCabalas = cabalas;
         renderCabalas(cabalas);
 
-    } catch (error) {
+   } catch (error) {
         console.error("Error en verCabalas:", error);
+        const listaContenedor = document.getElementById("listaCabalas");
+        
+        // Usamos tus clases CSS (.btn-filter) para que el botón no desentone
         listaContenedor.innerHTML = `
-            <div style="text-align:center; padding: 20px;">
-                <p>⚠️ Error cargando cábalas</p>
-                <button onclick="verCabalas()" style="font-size:12px; padding:5px 10px;">Reintentar</button>
+            <div style="text-align:center; padding: 30px; background: rgba(255,255,255,0.05); border-radius: 15px; border: 1px solid rgba(255,255,255,0.1);">
+                <p style="margin-bottom: 15px;">⚠️ No pudimos conectar con el vestuario</p>
+                <button class="btn-filter" onclick="verCabalas()">
+                    🔄 Reintentar conexión
+                </button>
+                <p style="font-size: 10px; opacity: 0.5; margin-top: 10px;">
+                    Detalle técnico: ${error.message}
+                </p>
             </div>`;
     }
 }
