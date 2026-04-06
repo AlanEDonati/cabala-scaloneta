@@ -4,7 +4,7 @@ let puntos = parseInt(localStorage.getItem("puntos")) || 0;
 let cacheCabalas = null;
 let todosLosProductos = [];
 const sonidoGol = new Audio('https://www.myinstants.com/media/sounds/muchachos-ahora-nos-volvimos-a-ilusionar.mp3');
-
+sonidoGol.preload = "auto"; // Esto le dice al navegador que lo vaya bajando
 // Inicialización al cargar la página
 window.onload = function() {
     cargarSelectorPartidos();
@@ -241,7 +241,8 @@ async function guardarCabala() {
             
             // Feedback visual de éxito
            // Buscá esta línea y reemplazala:
-mostrarModal("¡CÁBALA ACTIVADA!", "La Scaloneta te lo agradece, pibe.", "https://media.TyCSports.com/files/2022/12/18/517314/messi-copa-del-mundo_862x485.jpg");
+// Usamos este link de Imgur que es ultra estable
+mostrarModal("¡CÁBALA ACTIVADA!", "La Scaloneta te lo agradece, pibe.", "https://i.imgur.com/u8MAsID.jpg");
             
             // Refrescamos la lista de cábalas
             verCabalas();
