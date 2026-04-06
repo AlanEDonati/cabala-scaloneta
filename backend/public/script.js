@@ -3,9 +3,10 @@ const API_BASE_URL = "https://cabala-scaloneta-1.onrender.com";
 let puntos = parseInt(localStorage.getItem("puntos")) || 0;
 let cacheCabalas = null;
 let todosLosProductos = [];
-const sonidoGol = new Audio('https://www.myinstants.com/media/sounds/muchachos-ahora-nos-volvimos-a-ilusionar.mp3');
+// Este link es directo al archivo .mp3, sin reproductores raros en el medio
+const sonidoGol = new Audio('https://raw.githubusercontent.com/rafael-pinto/files/main/muchachos.mp3');
 sonidoGol.preload = "auto";
-sonidoGol.volume = 1.0;
+sonidoGol.load(); // Esto fuerza al navegador a empezar a bajarlo ya mismo
 // Inicialización al cargar la página
 window.onload = function() {
     cargarSelectorPartidos();
@@ -366,16 +367,15 @@ function mostrarModal(titulo, mensaje, imagen) {
     const modal = document.getElementById("modalGol");
     if (modal) modal.style.display = "flex";
 
-    // --- LÓGICA DE AUDIO REFORZADA ---
+    // --- LÓGICA DE AUDIO DEFINITIVA ---
     if (sonidoGol) {
-        // 1. Volvemos el audio al segundo 0 (por si ya sonó antes)
         sonidoGol.currentTime = 0; 
-        
-        // 2. Intentamos reproducir
-        sonidoGol.play().catch(error => {
-            // Si el celu bloquea el audio, lo vemos en la consola para debuguear
-            console.log("El navegador bloqueó el audio automático. Requiere click previo en el menú.", error);
-        });
+        // Esperamos un pelín para que el navegador esté "listo"
+        setTimeout(() => {
+            sonidoGol.play().catch(error => {
+                console.log("Bloqueo de audio: el usuario debe interactuar primero.", error);
+            });
+        }, 100);
     }
 }
 
