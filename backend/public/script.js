@@ -18,23 +18,50 @@ window.onload = function() {
 };
 
 // ================= SISTEMA DE PUNTOS Y NIVELES =================
-function sumarPuntos(cantidad) {
+function sumarPuntos(cantidad, evento) {
     puntos += cantidad;
     localStorage.setItem("puntos", puntos);
+    
+    // Animación visual de +PTS
+    crearAnimacionPuntos(cantidad, evento);
     mostrarNivel();
 }
 
-function obtenerNivel(puntos) {
-    if (puntos < 10) return "Capitán del Asado";
-    if (puntos < 30) return "Hincha Fiel";
-    if (puntos < 60) return "Cabulero Pro";
-    return "Brujo de la Scaloneta";
+function obtenerNivel(pts) {
+    if (pts < 20) return "Capitán del Asado 🥩";
+    if (pts < 50) return "Hincha Fiel 🏟️";
+    if (pts < 100) return "Cabulero Pro 🧿";
+    return "Brujo de la Scaloneta 🧙‍♂️";
 }
 
 function mostrarNivel() {
     const nivel = obtenerNivel(puntos);
     const el = document.getElementById("nivelUsuario");
-    if (el) el.innerText = `Nivel: ${nivel} (${puntos} pts)`;
+    const barra = document.getElementById("barraProgreso");
+    if (el) el.innerText = `Rango: ${nivel} (${puntos} pts)`;
+    
+    if (barra) {
+        // La barra se llena cada 100 puntos
+        let progreso = (puntos % 100);
+        if (puntos >= 100) progreso = 100; // Maxeada si es nivel máximo
+        barra.style.width = progreso + "%";
+    }
+}
+
+function crearAnimacionPuntos(cantidad, e) {
+    const span = document.createElement("span");
+    span.className = "puntos-flotantes";
+    span.innerText = `+${cantidad} PTS`;
+    
+    // Si hay un evento de click, sale de ahí, sino del centro
+    const x = e ? e.clientX : window.innerWidth / 2;
+    const y = e ? e.clientY : window.innerHeight / 2;
+    
+    span.style.left = x + "px";
+    span.style.top = y + "px";
+    
+    document.body.appendChild(span);
+    setTimeout(() => span.remove(), 1200);
 }
 
 // ================= SECCIÓN USUARIOS Y NAVEGACIÓN =================
@@ -140,6 +167,14 @@ function renderCabalas(cabalas) {
 }
 
 async function votarCabalaLogica(c, btn) {
+    // 1. Verificamos si hay usuario ANTES de hacer nada
+    const userId = localStorage.getItem("user_id");
+    if (!userId) {
+        alert("⚠️ ¡Epa! Tenés que unirte a la Scaloneta primero para sumar puntos.");
+        mostrarSeccion('home');
+        return;
+    }
+
     btn.disabled = true;
     const span = btn.querySelector("span");
     
@@ -147,14 +182,24 @@ async function votarCabalaLogica(c, btn) {
         const res = await fetch(`${API_BASE_URL}/votar-cabala`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ id: c.id, user_id: localStorage.getItem("user_id") })
+            body: JSON.stringify({ 
+                id: c.id, 
+                user_id: userId 
+            })
         });
 
         if (res.ok) {
-            span.textContent = parseInt(span.textContent) + 1;
-            btn.innerHTML = `👍 ${span.textContent} ✔`;
-            sumarPuntos(1);
-            if (sonidoGol) { sonidoGol.currentTime = 0; sonidoGol.play().catch(()=>{}); }
+            // Actualizamos el número de votos en la interfaz
+            const nuevosVotos = parseInt(span.textContent) + 1;
+            btn.innerHTML = `👍 ${nuevosVotos} ✔`;
+            
+            // 2. Sumamos puntos y pasamos el evento para la animación voladora
+            sumarPuntos(1, window.event);
+            
+            if (sonidoGol) { 
+                sonidoGol.currentTime = 0; 
+                sonidoGol.play().catch(()=>{}); 
+            }
         } else {
             const msg = await res.text();
             alert(msg || "Error al votar");
@@ -165,8 +210,15 @@ async function votarCabalaLogica(c, btn) {
         btn.disabled = false;
     }
 }
-
 async function guardarCabala() {
+    // 1. Verificamos si hay usuario ANTES de publicar
+    const userId = localStorage.getItem("user_id");
+    if (!userId) {
+        alert("⚠️ ¡Epa! Tenés que unirte a la Scaloneta primero para publicar.");
+        mostrarSeccion('home');
+        return;
+    }
+
     const desc = document.getElementById("cabalaInput").value.trim();
     if (!desc) return alert("Escribí tu cábala");
 
@@ -175,20 +227,30 @@ async function guardarCabala() {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-                user_id: localStorage.getItem("user_id"),
+                user_id: userId,
                 descripcion: desc
             })
         });
 
         if (res.ok) {
-            sumarPuntos(5);
+            // 2. Sumamos 5 puntos con animación (el +5 sale desde donde clickeaste)
+            sumarPuntos(5, window.event);
+            
+            // Limpiamos el input
             document.getElementById("cabalaInput").value = "";
+            
+            // Feedback visual de éxito
             mostrarModal("¡CÁBALA ACTIVADA!", "La Scaloneta te lo agradece.", "messi.jpg");
+            
+            // Refrescamos la lista de cábalas
             verCabalas();
+        } else {
+            alert("❌ Hubo un problema al guardar la cábala.");
         }
-    } catch (e) { alert("Error al publicar"); }
+    } catch (e) { 
+        alert("❌ Error de conexión al publicar."); 
+    }
 }
-
 // ================= SECCIÓN TIENDA =================
 async function cargarStore() {
     try {
@@ -202,21 +264,22 @@ function mostrarProductos(lista) {
     const contenedor = document.querySelector(".store-grid");
     if (!contenedor) return;
     contenedor.innerHTML = "";
-
+    const formatoMoneda = new Intl.NumberFormat('es-AR', {
+        style: 'currency', currency: 'ARS', minimumFractionDigits: 0
+    });
     lista.forEach(p => {
         const card = document.createElement("div");
-        card.className = "product-card";
+        card.className = "product-card fadeIn";
         card.innerHTML = `
-            <div class="badge">${p.category ? p.category.toUpperCase() : 'OFICIAL'}</div>
-            <img src="${p.image_url}" class="product-img" onerror="this.src='https://placehold.co/400x400?text=Imagen'">
+            <div class="product-badge">${p.category ? p.category.toUpperCase() : 'AFA'}</div>
+            <img src="${p.image_url}" class="product-img" onerror="this.src='https://placehold.co/400x400?text=AFA+OFICIAL'">
             <h3>${p.name}</h3>
-            <p class="price">$${Number(p.price).toLocaleString('es-AR')}</p>
-            <button class="btn-buy" onclick="comprar(${p.id})">¡LA QUIERO!</button>
+            <p class="price">${formatoMoneda.format(p.price)}</p>
+            <button class="btn-buy btn-full" onclick="comprar(${p.id})">¡LO QUIERO!</button>
         `;
         contenedor.appendChild(card);
     });
 }
-
 function filtrarProductos(categoria) {
     if (categoria === 'todos') {
         mostrarProductos(todosLosProductos);
@@ -332,15 +395,22 @@ function verCabalasTrending(cabalas) {
 
 // ================= GUARDAR PREDICCIÓN (FALTANTE) =================
 async function guardarPrediccion() {
+    // 1. Verificación de usuario con redirección
     const userId = localStorage.getItem("user_id");
+    if (!userId) {
+        alert("⚠️ ¡Epa! Tenés que unirte a la Scaloneta primero para predecir.");
+        mostrarSeccion('home');
+        return;
+    }
+
     const matchId = document.getElementById("matchSelect").value;
-    
-    // Asegurate de que en tu HTML los inputs de goles tengan id="scoreA" e id="scoreB"
     const scoreA = document.getElementById("scoreA")?.value; 
     const scoreB = document.getElementById("scoreB")?.value;
 
-    if (!userId) return alert("⚠️ Create un usuario en el Inicio primero.");
-    if (scoreA === "" || scoreB === "") return alert("⚠️ Poné los goles, ¡no seas pecho frío!");
+    // Validación de campos vacíos
+    if (scoreA === "" || scoreB === "") {
+        return alert("⚠️ Poné los goles, ¡no seas pecho frío!");
+    }
 
     try {
         const res = await fetch(`${API_BASE_URL}/predictions`, {
@@ -355,9 +425,12 @@ async function guardarPrediccion() {
         });
 
         if (res.ok) {
+            // 2. Sumamos 5 puntos con animación voladora (+5 PTS)
+            sumarPuntos(5, window.event);
+            
             alert("✅ ¡Predicción guardada! Sumaste puntos por participar.");
-            sumarPuntos(5);
-            // Limpiamos los inputs
+            
+            // Limpiamos los inputs para la próxima
             document.getElementById("scoreA").value = "";
             document.getElementById("scoreB").value = "";
         } else {

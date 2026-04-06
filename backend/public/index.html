@@ -710,12 +710,44 @@ margin:5px 0;
     color: #000;
 
 }
+
+/* Animación de puntos flotantes */
+.puntos-flotantes {
+    position: fixed;
+    color: #D4AF37;
+    font-weight: bold;
+    font-size: 24px;
+    pointer-events: none;
+    z-index: 10000;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+    animation: floatUp 1.2s ease-out forwards;
+}
+
+@keyframes floatUp {
+    0% { opacity: 0; transform: translateY(0) scale(0.5); }
+    20% { opacity: 1; transform: translateY(-20px) scale(1.2); }
+    100% { opacity: 0; transform: translateY(-100px) scale(1); }
+}
+
+/* Efecto en botones cuando están desactivados */
+button:disabled {
+    background: #555 !important;
+    cursor: not-allowed;
+    box-shadow: none !important;
+    transform: none !important;
+}
+
 </style>
 
 </head>
 
 <body>
-<div id="nivelUsuario" style="margin-bottom:10px;font-weight:bold;"></div>
+    <div style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 15px; margin-bottom: 20px; border: 1px solid rgba(212, 175, 55, 0.3);">
+    <div id="nivelUsuario" style="font-weight:bold; color: var(--oro); margin-bottom: 5px;"></div>
+    <div style="width: 100%; background: rgba(0,0,0,0.3); height: 10px; border-radius: 10px; overflow: hidden;">
+        <div id="barraProgreso" style="width: 0%; background: linear-gradient(90deg, var(--oro), #fff); height: 100%; transition: width 0.5s ease;"></div>
+    </div>
+</div>
 <p id="usuarioActivo"></p>
 <div id="hinchasActivos" style="margin-top:20px;font-weight:bold;"></div>
 
