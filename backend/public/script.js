@@ -87,17 +87,20 @@ async function crearUsuario() {
 }
 
 async function mostrarSeccion(seccion) {
-    // DESBLOQUEO DE AUDIO AGRESIVO PARA MÓVILES
+    // 1. DESBLOQUEO DE AUDIO (Cebado)
+    // Al tocar cualquier botón del menú, "activamos" el permiso del navegador
     if (sonidoGol) {
+        sonidoGol.muted = true; // Empezamos muteados para que el navegador no bloquee
         sonidoGol.play().then(() => {
             sonidoGol.pause();
+            sonidoGol.muted = false; // Quitamos el mute para cuando tenga que sonar de verdad
             sonidoGol.currentTime = 0;
-        }).catch(() => {
-            // Si falla, lo intentamos con un toque silencioso
-            console.log("Audio esperando interacción real...");
+        }).catch(e => {
+            console.log("Esperando click del usuario para habilitar audio");
         });
     }
 
+    // 2. LÓGICA DE VISIBILIDAD
     const secciones = ["home", "predicciones", "cabalas", "ranking", "store"];
     secciones.forEach(s => {
         const el = document.getElementById(s);
@@ -107,14 +110,19 @@ async function mostrarSeccion(seccion) {
     const activa = document.getElementById(seccion);
     if (activa) {
         activa.style.display = "block";
+        // Animación suave de entrada (opcional)
+        activa.classList.add('fadeIn'); 
         window.scrollTo(0, 0);
     }
 
+    // 3. CARGA DE DATOS POR SECCIÓN
     if (seccion === 'ranking') verRanking();
     if (seccion === 'cabalas') verCabalas();
-    if (seccion === 'predicciones') { cargarPartidos(); cargarSelectorPartidos(); }
+    if (seccion === 'predicciones') { 
+        cargarPartidos(); 
+        cargarSelectorPartidos(); 
+    }
 }
-
 // ================= SECCIÓN CÁBALAS =================
 async function verCabalas() {
     const listaContenedor = document.getElementById("listaCabalas");
@@ -362,26 +370,46 @@ function mostrarModal(titulo, mensaje, imagen) {
     
     if (t) t.innerText = titulo;
     if (m) m.innerText = mensaje;
-    if (i && imagen) i.src = imagen;
+    
+    // IMPORTANTE: Si la imagen es la de Messi, ya tiene el max-height en el HTML
+    if (i && imagen) {
+        i.src = imagen;
+    }
     
     const modal = document.getElementById("modalGol");
-    if (modal) modal.style.display = "flex";
+    if (modal) {
+        modal.style.display = "flex";
+    }
 
-    // --- LÓGICA DE AUDIO DEFINITIVA ---
+    // --- LÓGICA DE AUDIO REFORZADA ---
     if (sonidoGol) {
+        // Nos aseguramos que no esté en silencio y el volumen esté al máximo
+        sonidoGol.muted = false; 
+        sonidoGol.volume = 1.0; 
         sonidoGol.currentTime = 0; 
-        // Esperamos un pelín para que el navegador esté "listo"
+
+        // El pequeño delay ayuda a que el navegador procese la apertura del modal 
+        // antes de intentar reproducir el sonido.
         setTimeout(() => {
             sonidoGol.play().catch(error => {
-                console.log("Bloqueo de audio: el usuario debe interactuar primero.", error);
+                console.warn("El audio no pudo reproducirse. Probablemente falta una interacción previa del usuario.", error);
             });
-        }, 100);
+        }, 150); // Un pelín más de delay para mayor seguridad
     }
 }
 
 function cerrarModal() {
+    // 1. Ocultamos el cartel (el modal)
     const modal = document.getElementById("modalGol");
-    if (modal) modal.style.display = "none";
+    if (modal) {
+        modal.style.display = "none";
+    }
+
+    // 2. DETENEMOS EL AUDIO
+    if (sonidoGol) {
+        sonidoGol.pause();         // Frena la música
+        sonidoGol.currentTime = 0; // La rebobina al principio para la próxima
+    }
 }
 
 function compartirCabala(texto) {
