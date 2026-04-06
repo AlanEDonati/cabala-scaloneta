@@ -4,7 +4,8 @@ let puntos = parseInt(localStorage.getItem("puntos")) || 0;
 let cacheCabalas = null;
 let todosLosProductos = [];
 const sonidoGol = new Audio('https://www.myinstants.com/media/sounds/muchachos-ahora-nos-volvimos-a-ilusionar.mp3');
-sonidoGol.preload = "auto"; // Esto le dice al navegador que lo vaya bajando
+sonidoGol.preload = "auto";
+sonidoGol.volume = 1.0;
 // Inicialización al cargar la página
 window.onload = function() {
     cargarSelectorPartidos();
@@ -238,19 +239,26 @@ async function guardarCabala() {
         });
 
         if (res.ok) {
-            // 2. Sumamos 5 puntos con animación (el +5 sale desde donde clickeaste)
+            // 2. Sumamos 5 puntos con animación voladora
             sumarPuntos(5, window.event);
             
-            // Limpiamos el input
+            // 3. Limpiamos el input
             document.getElementById("cabalaInput").value = "";
             
-            // Feedback visual de éxito
-           // Buscá esta línea y reemplazala:
-// Usamos este link de Imgur que es ultra estable
-mostrarModal("¡CÁBALA ACTIVADA!", "La Scaloneta te lo agradece, pibe.", "https://upload.wikimedia.org/wikipedia/commons/b/b4/Lionel-Messi-Argentina-2022-FIFA-World-Cup_%28cropped%29.jpg");
+            // 4. Feedback visual con Messi (Link de Wikipedia que no falla)
+            mostrarModal(
+                "¡CÁBALA ACTIVADA!", 
+                "La Scaloneta te lo agradece, pibe.", 
+                "https://upload.wikimedia.org/wikipedia/commons/b/b4/Lionel-Messi-Argentina-2022-FIFA-World-Cup_%28cropped%29.jpg"
+            );
             
-            // Refrescamos la lista de cábalas
+            // 5. REUBICACIÓN: Nos movemos a la sección de cábalas 
+            // para que al cerrar el modal, el usuario ya esté ahí.
+            mostrarSeccion('cabalas');
+            
+            // 6. Refrescamos la lista para mostrar la nueva cábala arriba
             verCabalas();
+
         } else {
             alert("❌ Hubo un problema al guardar la cábala.");
         }
@@ -350,13 +358,25 @@ function mostrarModal(titulo, mensaje, imagen) {
     const t = document.getElementById("modalTitulo");
     const m = document.getElementById("modalMensaje");
     const i = document.getElementById("imgFestejo");
+    
     if (t) t.innerText = titulo;
     if (m) m.innerText = mensaje;
     if (i && imagen) i.src = imagen;
     
     const modal = document.getElementById("modalGol");
     if (modal) modal.style.display = "flex";
-    sonidoGol.play().catch(()=>{});
+
+    // --- LÓGICA DE AUDIO REFORZADA ---
+    if (sonidoGol) {
+        // 1. Volvemos el audio al segundo 0 (por si ya sonó antes)
+        sonidoGol.currentTime = 0; 
+        
+        // 2. Intentamos reproducir
+        sonidoGol.play().catch(error => {
+            // Si el celu bloquea el audio, lo vemos en la consola para debuguear
+            console.log("El navegador bloqueó el audio automático. Requiere click previo en el menú.", error);
+        });
+    }
 }
 
 function cerrarModal() {
