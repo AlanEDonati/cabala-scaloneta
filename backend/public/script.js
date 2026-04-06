@@ -88,9 +88,15 @@ async function crearUsuario() {
 }
 
 async function mostrarSeccion(seccion) {
-    // Truco para habilitar audio en móviles
-    if (sonidoGol && sonidoGol.paused) {
-        sonidoGol.play().then(() => { sonidoGol.pause(); sonidoGol.currentTime = 0; }).catch(e => {});
+    // DESBLOQUEO DE AUDIO AGRESIVO PARA MÓVILES
+    if (sonidoGol) {
+        sonidoGol.play().then(() => {
+            sonidoGol.pause();
+            sonidoGol.currentTime = 0;
+        }).catch(() => {
+            // Si falla, lo intentamos con un toque silencioso
+            console.log("Audio esperando interacción real...");
+        });
     }
 
     const secciones = ["home", "predicciones", "cabalas", "ranking", "store"];
@@ -105,7 +111,6 @@ async function mostrarSeccion(seccion) {
         window.scrollTo(0, 0);
     }
 
-    // Carga específica por sección
     if (seccion === 'ranking') verRanking();
     if (seccion === 'cabalas') verCabalas();
     if (seccion === 'predicciones') { cargarPartidos(); cargarSelectorPartidos(); }
@@ -242,7 +247,7 @@ async function guardarCabala() {
             // Feedback visual de éxito
            // Buscá esta línea y reemplazala:
 // Usamos este link de Imgur que es ultra estable
-mostrarModal("¡CÁBALA ACTIVADA!", "La Scaloneta te lo agradece, pibe.", "https://i.imgur.com/u8MAsID.jpg");
+mostrarModal("¡CÁBALA ACTIVADA!", "La Scaloneta te lo agradece, pibe.", "https://upload.wikimedia.org/wikipedia/commons/b/b4/Lionel-Messi-Argentina-2022-FIFA-World-Cup_%28cropped%29.jpg");
             
             // Refrescamos la lista de cábalas
             verCabalas();
