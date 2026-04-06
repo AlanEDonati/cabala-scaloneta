@@ -3,7 +3,7 @@ const API_BASE_URL = "https://cabala-scaloneta-1.onrender.com";
 let puntos = parseInt(localStorage.getItem("puntos")) || 0;
 let cacheCabalas = null;
 let todosLosProductos = [];
-const sonidoGol = new Audio('https://www.soundjay.com/misc/sounds/cheering-01.mp3');
+const sonidoGol = new Audio('https://www.myinstants.com/media/sounds/muchachos-ahora-nos-volvimos-a-ilusionar.mp3');
 
 // Inicialización al cargar la página
 window.onload = function() {
@@ -240,7 +240,8 @@ async function guardarCabala() {
             document.getElementById("cabalaInput").value = "";
             
             // Feedback visual de éxito
-            mostrarModal("¡CÁBALA ACTIVADA!", "La Scaloneta te lo agradece.", "messi.jpg");
+           // Buscá esta línea y reemplazala:
+mostrarModal("¡CÁBALA ACTIVADA!", "La Scaloneta te lo agradece, pibe.", "https://media.TyCSports.com/files/2022/12/18/517314/messi-copa-del-mundo_862x485.jpg");
             
             // Refrescamos la lista de cábalas
             verCabalas();
