@@ -243,19 +243,22 @@ async function guardarCabala() {
             // 3. Limpiamos el input
             document.getElementById("cabalaInput").value = "";
             
-            // 4. Feedback visual con Messi (Link de Wikipedia que no falla)
-            mostrarModal(
-                "¡CÁBALA ACTIVADA!", 
-                "La Scaloneta te lo agradece, pibe.", 
-                "https://upload.wikimedia.org/wikipedia/commons/b/b4/Lionel-Messi-Argentina-2022-FIFA-World-Cup_%28cropped%29.jpg"
-            );
-            
-            // 5. REUBICACIÓN: Nos movemos a la sección de cábalas 
-            // para que al cerrar el modal, el usuario ya esté ahí.
+            // 4. CAMBIO DE SECCIÓN (Importante: esto va PRIMERO)
+            // Nos movemos a cábalas para que Messi no aparezca sobre el Store
             mostrarSeccion('cabalas');
             
-            // 6. Refrescamos la lista para mostrar la nueva cábala arriba
-            verCabalas();
+            // 5. PAUSA DE SEGURIDAD (500ms)
+            // Esperamos medio segundo para que la pantalla se acomode antes del festejo
+            setTimeout(() => {
+                verCabalas(); // Refrescamos la lista de fondo
+                
+                // 6. LANZAMOS A MESSI Y EL SONIDO
+                mostrarModal(
+                    "¡CÁBALA ACTIVADA!", 
+                    "La Scaloneta te lo agradece, pibe.", 
+                    "https://upload.wikimedia.org/wikipedia/commons/b/b4/Lionel-Messi-Argentina-2022-FIFA-World-Cup_%28cropped%29.jpg"
+                );
+            }, 500);
 
         } else {
             alert("❌ Hubo un problema al guardar la cábala.");
