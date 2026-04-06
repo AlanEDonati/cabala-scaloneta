@@ -831,12 +831,18 @@ button:disabled {
     <button class="btn-filter" onclick="filtrarProductos('coleccionables')">Colección</button>
 </div>
 <div class="store-grid"></div> 
-</div> </div> <div id="modalGol" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:999999; justify-content:center; align-items:center; flex-direction:column; text-align:center; padding:20px;">
-    <div style="background: white; padding: 30px; border-radius: 20px; max-width: 400px; position: relative; border: 5px solid var(--oro);">
-        <h2 id="modalTitulo" style="color: #00355E; margin-top:0; font-size: 2rem;">¡GOOOOOL!</h2>
-        <p id="modalMensaje" style="color: #333; font-size: 1.2rem; font-weight: bold; margin-bottom: 15px;"></p>
-       <img id="imgFestejo" src="" style="width:100%; max-height: 40vh; object-fit: cover; border-radius:10px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
-        <button onclick="cerrarModal()" class="btn-full" style="background:#00355E; color:white; padding: 15px; font-size: 1.1rem; border-radius: 10px; width: 100%; cursor: pointer; border: none;">¡VAMOS ARGENTINA! 🇦🇷</button>
+</div> </div>
+
+<div id="modalGol" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:999999; justify-content:center; align-items:center; padding:20px;">
+    <div style="background: white; padding: 20px; border-radius: 20px; width: 90%; max-width: 400px; text-align: center; border: 5px solid #D4AF37; display: flex; flex-direction: column; align-items: center;">
+        <h2 id="modalTitulo" style="color: #00355E; margin: 10px 0; font-size: 1.5rem;">¡GOOOOOL!</h2>
+        <p id="modalMensaje" style="color: #333; font-weight: bold; margin-bottom: 15px;"></p>
+        
+        <div style="width: 100%; max-height: 50vh; overflow: hidden; border-radius: 10px; margin-bottom: 15px;">
+            <img id="imgFestejo" src="" style="width: 100%; max-height: 40vh; object-fit: contain; border-radius: 10px; margin-bottom: 15px; display: block;">
+        </div>
+
+        <button onclick="cerrarModal()" style="background:#00355E; color:white; padding: 15px; width: 100%; border-radius: 10px; border: none; font-weight: bold; cursor: pointer;">¡VAMOS ARGENTINA! 🇦🇷</button>
     </div>
 </div>
 

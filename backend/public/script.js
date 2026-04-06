@@ -367,34 +367,36 @@ function mostrarModal(titulo, mensaje, imagen) {
     const t = document.getElementById("modalTitulo");
     const m = document.getElementById("modalMensaje");
     const i = document.getElementById("imgFestejo");
-    
+    const modal = document.getElementById("modalGol");
+
+    // 1. Cargamos textos
     if (t) t.innerText = titulo;
     if (m) m.innerText = mensaje;
     
-    // IMPORTANTE: Si la imagen es la de Messi, ya tiene el max-height en el HTML
+    // 2. Cargamos la imagen Y la mostramos solo cuando cargue (para evitar el "salto")
     if (i && imagen) {
         i.src = imagen;
+        i.style.display = "block"; // Aseguramos que se vea
     }
     
-    const modal = document.getElementById("modalGol");
+    // 3. Mostramos el modal primero (esto es clave para el audio)
     if (modal) {
         modal.style.display = "flex";
     }
 
-    // --- LÓGICA DE AUDIO REFORZADA ---
+    // 4. LÓGICA DE AUDIO DEFINITIVA
     if (sonidoGol) {
-        // Nos aseguramos que no esté en silencio y el volumen esté al máximo
+        // Forzamos permisos: quitamos mute y subimos volumen
         sonidoGol.muted = false; 
         sonidoGol.volume = 1.0; 
         sonidoGol.currentTime = 0; 
 
-        // El pequeño delay ayuda a que el navegador procese la apertura del modal 
-        // antes de intentar reproducir el sonido.
+        // Le damos 200ms para que el modal ya esté visible (algunos navegadores lo exigen)
         setTimeout(() => {
             sonidoGol.play().catch(error => {
-                console.warn("El audio no pudo reproducirse. Probablemente falta una interacción previa del usuario.", error);
+                console.warn("Bloqueo de navegador: el usuario debe tocar la pantalla primero.", error);
             });
-        }, 150); // Un pelín más de delay para mayor seguridad
+        }, 200); 
     }
 }
 
@@ -496,3 +498,21 @@ async function guardarPrediccion() {
         alert("❌ Error de conexión con el servidor.");
     }
 }
+
+// Esta función "despierta" el audio con el primer toque del usuario en la pantalla
+function habilitarAudio() {
+    if (sonidoGol) {
+        sonidoGol.play().then(() => {
+            sonidoGol.pause();
+            sonidoGol.currentTime = 0;
+            // Una vez habilitado, quitamos el evento para que no moleste más
+            document.removeEventListener('click', habilitarAudio);
+            document.removeEventListener('touchstart', habilitarAudio);
+            console.log("Audio habilitado correctamente");
+        }).catch(e => console.log("Esperando toque..."));
+    }
+}
+
+// Escuchamos el primer click o toque en cualquier parte
+document.addEventListener('click', habilitarAudio);
+document.addEventListener('touchstart', habilitarAudio);
