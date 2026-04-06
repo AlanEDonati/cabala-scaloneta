@@ -4,10 +4,7 @@ let puntos = parseInt(localStorage.getItem("puntos")) || 0;
 let cacheCabalas = null;
 let todosLosProductos = [];
 // Este link es directo al archivo .mp3, sin reproductores raros en el medio
-const sonidoGol = new Audio('https://raw.githubusercontent.com/rafael-pinto/files/main/muchachos.mp3');
-sonidoGol.preload = "auto";
-sonidoGol.load(); // Esto fuerza al navegador a empezar a bajarlo ya mismo
-// Inicialización al cargar la página
+const sonidoGol = document.getElementById("audioMuchachos");
 window.onload = function() {
     cargarSelectorPartidos();
     cargarPartidos();
