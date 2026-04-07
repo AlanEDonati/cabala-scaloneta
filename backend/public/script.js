@@ -1,10 +1,14 @@
- // ================= CONFIGURACIÓN Y ESTADO INICIAL =================
+// ================= CONFIGURACIÓN Y ESTADO INICIAL =================
 const API_BASE_URL = "https://cabala-scaloneta-1.onrender.com";
 let puntos = parseInt(localStorage.getItem("puntos")) || 0;
 let cacheCabalas = null;
 let todosLosProductos = [];
-// Este link es directo al archivo .mp3, sin reproductores raros en el medio
-const sonidoGol = document.getElementById("audioMuchachos");
+
+// PLAN C: Creamos el audio directamente desde JS (Blindado)
+const sonidoGol = new Audio("https://raw.githubusercontent.com/rafael-pinto/files/main/muchachos.mp3");
+sonidoGol.preload = "auto"; // Le decimos al navegador que lo vaya bajando
+sonidoGol.volume = 1.0;
+
 window.onload = function() {
     cargarSelectorPartidos();
     cargarPartidos();
@@ -369,37 +373,38 @@ function mostrarModal(titulo, mensaje, imagen) {
     const i = document.getElementById("imgFestejo");
     const modal = document.getElementById("modalGol");
 
-    // 1. Cargamos textos
+    // 1. Cargamos textos (siempre verificando que existan los elementos)
     if (t) t.innerText = titulo;
     if (m) m.innerText = mensaje;
     
-    // 2. Cargamos la imagen Y la mostramos solo cuando cargue (para evitar el "salto")
+    // 2. Cargamos la imagen con los estilos de control
     if (i && imagen) {
         i.src = imagen;
-        i.style.display = "block"; // Aseguramos que se vea
+        i.style.display = "block";
+        // Aseguramos que no se deforme (esto ayuda por si el CSS falla)
+        i.style.maxHeight = "40vh";
+        i.style.objectFit = "contain";
     }
     
-    // 3. Mostramos el modal primero (esto es clave para el audio)
+    // 3. Mostramos el modal
     if (modal) {
         modal.style.display = "flex";
     }
 
-    // 4. LÓGICA DE AUDIO DEFINITIVA
+    // 4. LÓGICA DE AUDIO (Usando el objeto 'new Audio' que creamos arriba)
     if (sonidoGol) {
-        // Forzamos permisos: quitamos mute y subimos volumen
         sonidoGol.muted = false; 
         sonidoGol.volume = 1.0; 
         sonidoGol.currentTime = 0; 
 
-        // Le damos 200ms para que el modal ya esté visible (algunos navegadores lo exigen)
+        // Un pequeño delay de 200ms es el estándar de oro para móviles
         setTimeout(() => {
             sonidoGol.play().catch(error => {
-                console.warn("Bloqueo de navegador: el usuario debe tocar la pantalla primero.", error);
+                console.warn("El audio requiere un toque previo en la pantalla.", error);
             });
         }, 200); 
     }
 }
-
 function cerrarModal() {
     // 1. Ocultamos el cartel (el modal)
     const modal = document.getElementById("modalGol");
@@ -501,19 +506,24 @@ async function guardarPrediccion() {
 
 // Esta función "despierta" el audio con el primer toque del usuario en la pantalla
 function habilitarAudio() {
-    if (sonidoGol) {
-        sonidoGol.muted = true; 
-        sonidoGol.play().then(() => {
-            sonidoGol.pause();
-            sonidoGol.muted = false;
-            sonidoGol.currentTime = 0;
-            document.removeEventListener('click', habilitarAudio);
-            document.removeEventListener('touchstart', habilitarAudio);
-        }).catch(e => console.log("Permiso pendiente..."));
+    if (!sonidoGol) {
+        console.error("❌ ERROR: No se encontró el elemento 'audioMuchachos' en el HTML.");
+        return;
     }
+
+    sonidoGol.muted = true;
+    sonidoGol.play().then(() => {
+        sonidoGol.pause();
+        sonidoGol.muted = false;
+        sonidoGol.currentTime = 0;
+        console.log("✅ AUDIO HABILITADO: El navegador dio permiso.");
+        
+        document.removeEventListener('click', habilitarAudio);
+        document.removeEventListener('touchstart', habilitarAudio);
+    }).catch(e => {
+        console.warn("⚠️ PERMISO DENEGADO: El navegador sigue bloqueando.", e);
+    });
 }
-document.addEventListener('click', habilitarAudio);
-document.addEventListener('touchstart', habilitarAudio);
 
 // --- EL DESBLOQUEADOR MAESTRO DE AUDIO ---
 function desbloquearAudioYVencerAlNavegador() {
