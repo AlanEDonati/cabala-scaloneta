@@ -502,17 +502,39 @@ async function guardarPrediccion() {
 // Esta función "despierta" el audio con el primer toque del usuario en la pantalla
 function habilitarAudio() {
     if (sonidoGol) {
+        sonidoGol.muted = true; 
         sonidoGol.play().then(() => {
             sonidoGol.pause();
+            sonidoGol.muted = false;
             sonidoGol.currentTime = 0;
-            // Una vez habilitado, quitamos el evento para que no moleste más
             document.removeEventListener('click', habilitarAudio);
             document.removeEventListener('touchstart', habilitarAudio);
-            console.log("Audio habilitado correctamente");
-        }).catch(e => console.log("Esperando toque..."));
+        }).catch(e => console.log("Permiso pendiente..."));
+    }
+}
+document.addEventListener('click', habilitarAudio);
+document.addEventListener('touchstart', habilitarAudio);
+
+// --- EL DESBLOQUEADOR MAESTRO DE AUDIO ---
+function desbloquearAudioYVencerAlNavegador() {
+    if (sonidoGol) {
+        // Reproducimos un milisegundo en silencio para ganar el permiso
+        sonidoGol.muted = true; 
+        sonidoGol.play().then(() => {
+            sonidoGol.pause();
+            sonidoGol.muted = false; // Ya tenemos permiso, quitamos el silencio
+            sonidoGol.currentTime = 0;
+            console.log("⚽ Audio desbloqueado: ¡Estamos listos para el GOL!");
+            
+            // Una vez que funcionó, quitamos estos "escuchadores" para no gastar batería
+            document.removeEventListener('click', desbloquearAudioYVencerAlNavegador);
+            document.removeEventListener('touchstart', desbloquearAudioYVencerAlNavegador);
+        }).catch(error => {
+            console.log("Esperando una interacción real del hincha...");
+        });
     }
 }
 
-// Escuchamos el primer click o toque en cualquier parte
-document.addEventListener('click', habilitarAudio);
-document.addEventListener('touchstart', habilitarAudio);
+// Escuchamos el primer click o toque en cualquier parte de la pantalla
+document.addEventListener('click', desbloquearAudioYVencerAlNavegador);
+document.addEventListener('touchstart', desbloquearAudioYVencerAlNavegador);
