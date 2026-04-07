@@ -4,9 +4,8 @@ let puntos = parseInt(localStorage.getItem("puntos")) || 0;
 let cacheCabalas = null;
 let todosLosProductos = [];
 
-// PLAN C: Creamos el audio directamente desde JS (Blindado)
-const sonidoGol = new Audio("https://raw.githubusercontent.com/rafael-pinto/files/main/muchachos.mp3");
-sonidoGol.preload = "auto"; // Le decimos al navegador que lo vaya bajando
+const sonidoGol = new Audio("./muchachos.mp3"); 
+sonidoGol.preload = "auto";
 sonidoGol.volume = 1.0;
 
 window.onload = function() {
