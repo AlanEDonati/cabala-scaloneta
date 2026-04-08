@@ -4,10 +4,22 @@ let puntos = parseInt(localStorage.getItem("puntos")) || 0;
 let cacheCabalas = null;
 let todosLosProductos = [];
 
-const sonidoGol = new Audio("./muchachos.mp3"); 
-sonidoGol.preload = "auto";
-sonidoGol.volume = 1.0;
 
+// --- 🎶 LA BANDA SONORA DE LA SCALONETA ---
+// Usamos 'sonidoGol' como nombre de variable para el archivo muchachos.mp3
+const musicaAmbiente = new Audio("./himno.mp3");
+const sonidoGol = new Audio("./muchachos.mp3"); // <--- ESTE ES EL CAMBIO CLAVE
+const sonidoGritoGol = new Audio("./gol.mp3");
+const sonidoClick = new Audio("./click.mp3");
+
+// Ajustes de volumen
+musicaAmbiente.loop = true;
+musicaAmbiente.volume = 0.2;
+sonidoGol.volume = 1.0; 
+sonidoGritoGol.volume = 0.8;
+sonidoClick.volume = 0.4;
+
+// --- 🚀 CARGA DE LA APP ---
 window.onload = function() {
     cargarSelectorPartidos();
     cargarPartidos();
@@ -17,8 +29,37 @@ window.onload = function() {
     mostrarUsuario();
     mostrarNivel();
     cargarStore();
+    
+    // NOTA: El audio no arranca acá porque el navegador lo bloquea.
+    // Arrancará cuando el usuario toque el botón "¡VAMOS ARGENTINA!" del modal.
 };
 
+function entrarAApp() {
+    // 1. Iniciamos el Himno (El navegador lo permite porque viene de un CLICK)
+    musicaAmbiente.play().catch(error => console.warn("Error al iniciar música:", error));
+
+    // 2. "Pre-cargamos" los otros sonidos para que no haya delay después
+    sonidoGol.load();
+    sonidoGritoGol.load();
+    sonidoClick.load();
+
+    // 3. Hacemos desaparecer la pantalla de bienvenida con un efecto simple
+    const bienvenida = document.getElementById("pantallaBienvenida");
+    if (bienvenida) {
+        bienvenida.style.transition = "opacity 0.5s ease";
+        bienvenida.style.opacity = "0";
+        setTimeout(() => {
+            bienvenida.style.display = "none";
+        }, 500);
+    }
+    
+    console.log("⚽ Mística activada y audio desbloqueado.");
+}
+
+function tocarClick() {
+    sonidoClick.currentTime = 0;
+    sonidoClick.play().catch(() => {}); 
+}
 // ================= SISTEMA DE PUNTOS Y NIVELES =================
 function sumarPuntos(cantidad, evento) {
     puntos += cantidad;
@@ -38,18 +79,23 @@ function obtenerNivel(pts) {
 
 function mostrarNivel() {
     const nivel = obtenerNivel(puntos);
-    const el = document.getElementById("nivelUsuario");
+    const el = document.getElementById("usuarioActivoNivel"); // Asegurate que el ID coincida con tu HTML
     const barra = document.getElementById("barraProgreso");
+    
     if (el) el.innerText = `Rango: ${nivel} (${puntos} pts)`;
     
     if (barra) {
-        // La barra se llena cada 100 puntos
-        let progreso = (puntos % 100);
-        if (puntos >= 100) progreso = 100; // Maxeada si es nivel máximo
+        // --- 🎯 EL CAMBIO ESTÁ ACÁ ---
+        // Usamos el símbolo '%' (módulo) para que la barra siempre 
+        // represente el progreso hacia los próximos 100 puntos.
+        let progreso = (puntos % 100); 
+        
+        // Si justo tenés 0 puntos, le ponemos un mínimo de 2% para que se vea un poquito de color
+        if (progreso === 0 && puntos > 0) progreso = 100; 
+
         barra.style.width = progreso + "%";
     }
 }
-
 function crearAnimacionPuntos(cantidad, e) {
     const span = document.createElement("span");
     span.className = "puntos-flotantes";
@@ -456,6 +502,9 @@ function verCabalasTrending(cabalas) {
 
 // ================= GUARDAR PREDICCIÓN (FALTANTE) =================
 async function guardarPrediccion() {
+    // 0. Sonido de click al tocar el botón (Feedback inmediato)
+    if (typeof tocarClick === "function") tocarClick();
+
     // 1. Verificación de usuario con redirección
     const userId = localStorage.getItem("user_id");
     if (!userId) {
@@ -486,6 +535,12 @@ async function guardarPrediccion() {
         });
 
         if (res.ok) {
+            // --- ⚽ ¡MOMENTO DE GLORIA! ⚽ ---
+            if (sonidoGritoGol) {
+                sonidoGritoGol.currentTime = 0; // Reiniciamos por si acaso
+                sonidoGritoGol.play().catch(e => console.warn("El audio falló:", e));
+            }
+
             // 2. Sumamos 5 puntos con animación voladora (+5 PTS)
             sumarPuntos(5, window.event);
             
@@ -502,48 +557,3 @@ async function guardarPrediccion() {
         alert("❌ Error de conexión con el servidor.");
     }
 }
-
-// Esta función "despierta" el audio con el primer toque del usuario en la pantalla
-function habilitarAudio() {
-    if (!sonidoGol) {
-        console.error("❌ ERROR: No se encontró el elemento 'audioMuchachos' en el HTML.");
-        return;
-    }
-
-    sonidoGol.muted = true;
-    sonidoGol.play().then(() => {
-        sonidoGol.pause();
-        sonidoGol.muted = false;
-        sonidoGol.currentTime = 0;
-        console.log("✅ AUDIO HABILITADO: El navegador dio permiso.");
-        
-        document.removeEventListener('click', habilitarAudio);
-        document.removeEventListener('touchstart', habilitarAudio);
-    }).catch(e => {
-        console.warn("⚠️ PERMISO DENEGADO: El navegador sigue bloqueando.", e);
-    });
-}
-
-// --- EL DESBLOQUEADOR MAESTRO DE AUDIO ---
-function desbloquearAudioYVencerAlNavegador() {
-    if (sonidoGol) {
-        // Reproducimos un milisegundo en silencio para ganar el permiso
-        sonidoGol.muted = true; 
-        sonidoGol.play().then(() => {
-            sonidoGol.pause();
-            sonidoGol.muted = false; // Ya tenemos permiso, quitamos el silencio
-            sonidoGol.currentTime = 0;
-            console.log("⚽ Audio desbloqueado: ¡Estamos listos para el GOL!");
-            
-            // Una vez que funcionó, quitamos estos "escuchadores" para no gastar batería
-            document.removeEventListener('click', desbloquearAudioYVencerAlNavegador);
-            document.removeEventListener('touchstart', desbloquearAudioYVencerAlNavegador);
-        }).catch(error => {
-            console.log("Esperando una interacción real del hincha...");
-        });
-    }
-}
-
-// Escuchamos el primer click o toque en cualquier parte de la pantalla
-document.addEventListener('click', desbloquearAudioYVencerAlNavegador);
-document.addEventListener('touchstart', desbloquearAudioYVencerAlNavegador);
