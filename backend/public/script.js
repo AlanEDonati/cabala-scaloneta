@@ -6,18 +6,27 @@ let todosLosProductos = [];
 
 
 // --- 🎶 LA BANDA SONORA DE LA SCALONETA ---
-// Usamos 'sonidoGol' como nombre de variable para el archivo muchachos.mp3
-const musicaAmbiente = new Audio("./himno.mp3");
-const sonidoGol = new Audio("./muchachos.mp3"); // <--- ESTE ES EL CAMBIO CLAVE
-const sonidoGritoGol = new Audio("./gol.mp3");
-const sonidoClick = new Audio("./click.mp3");
 
-// Ajustes de volumen
-musicaAmbiente.loop = true;
-musicaAmbiente.volume = 0.2;
+// Definición de archivos
+const gritoMundial = new Audio("./hit_mundial.mp3"); // El hit de YouTube (reemplaza al viejo himno)
+const musicaRetro = new Audio("./retro.mp3");       // El archivo arcade que subiste (fondo)
+const sonidoGol = new Audio("./muchachos.mp3");     // Para momentos de gloria
+const sonidoGritoGol = new Audio("./gol.mp3");      // Para predicciones
+const sonidoClick = new Audio("./click.mp3");       // Feedback de botones
+
+// --- 🎚️ AJUSTES DE VOLUMEN Y REPRODUCCIÓN ---
+
+// Música de fondo (Arcade)
+musicaRetro.loop = true;          // Se repite infinitamente
+musicaRetro.volume = 0.15;        // Muy bajito para no molestar
+
+// Sonidos de impacto (Gritos y efectos)
+gritoMundial.volume = 0.8;        // Entrada potente
 sonidoGol.volume = 1.0; 
 sonidoGritoGol.volume = 0.8;
 sonidoClick.volume = 0.4;
+
+// Nota: musicaAmbiente ya no se usa, ahora usamos musicaRetro para el fondo general.
 
 // --- 🚀 CARGA DE LA APP ---
 window.onload = function() {
@@ -34,16 +43,39 @@ window.onload = function() {
     // Arrancará cuando el usuario toque el botón "¡VAMOS ARGENTINA!" del modal.
 };
 
-function entrarAApp() {
-    // 1. Iniciamos el Himno (El navegador lo permite porque viene de un CLICK)
-    musicaAmbiente.play().catch(error => console.warn("Error al iniciar música:", error));
+function detenerMusica() {
+    // Incluimos las nuevas variables: gritoMundial y musicaRetro
+    const audios = [gritoMundial, musicaRetro, sonidoGol, sonidoGritoGol];
+    
+    audios.forEach(audio => {
+        if (audio) {
+            audio.pause(); 
+            audio.currentTime = 0; // Corta el audio de raíz
+        }
+    });
+}
 
-    // 2. "Pre-cargamos" los otros sonidos para que no haya delay después
+function entrarAApp() {
+    // 1. Iniciamos el hit del mundial (Grito de la hinchada)
+    if (gritoMundial) {
+        gritoMundial.play().catch(error => console.warn("Error al iniciar audio:", error));
+    }
+
+    // 2. Iniciamos la música retro de fondo después de un breve delay (ej. 4 segundos)
+    // para que no se tapen entre sí al principio
+   setTimeout(() => {
+    // Solo arranca si musicaRetro existe y NO se está reproduciendo ya algo más
+    if (musicaRetro && musicaRetro.paused) { 
+        musicaRetro.play().catch(() => {});
+    }
+}, 4000);
+
+    // 3. "Pre-cargamos" los efectos para que no haya delay en los botones
     sonidoGol.load();
     sonidoGritoGol.load();
     sonidoClick.load();
 
-    // 3. Hacemos desaparecer la pantalla de bienvenida con un efecto simple
+    // 4. Efecto visual de desaparición de la bienvenida
     const bienvenida = document.getElementById("pantallaBienvenida");
     if (bienvenida) {
         bienvenida.style.transition = "opacity 0.5s ease";
@@ -53,7 +85,7 @@ function entrarAApp() {
         }, 500);
     }
     
-    console.log("⚽ Mística activada y audio desbloqueado.");
+    console.log("⚽ Mística retro activada y audio desbloqueado.");
 }
 
 function tocarClick() {
@@ -136,16 +168,20 @@ async function crearUsuario() {
 }
 
 async function mostrarSeccion(seccion) {
+    // 0. CORTAR EL AUDIO ANTERIOR
+    // Esto evita que el himno o el arcade de inicio se pisen con los sonidos de la app
+    detenerMusica();
+
     // 1. DESBLOQUEO DE AUDIO (Cebado)
-    // Al tocar cualquier botón del menú, "activamos" el permiso del navegador
+    // Aprovechamos el click del menú para que el navegador nos dé permiso eterno
     if (sonidoGol) {
-        sonidoGol.muted = true; // Empezamos muteados para que el navegador no bloquee
+        sonidoGol.muted = true; 
         sonidoGol.play().then(() => {
             sonidoGol.pause();
-            sonidoGol.muted = false; // Quitamos el mute para cuando tenga que sonar de verdad
+            sonidoGol.muted = false; 
             sonidoGol.currentTime = 0;
         }).catch(e => {
-            console.log("Esperando click del usuario para habilitar audio");
+            console.log("Esperando interacción para habilitar audio");
         });
     }
 
@@ -159,7 +195,6 @@ async function mostrarSeccion(seccion) {
     const activa = document.getElementById(seccion);
     if (activa) {
         activa.style.display = "block";
-        // Animación suave de entrada (opcional)
         activa.classList.add('fadeIn'); 
         window.scrollTo(0, 0);
     }
