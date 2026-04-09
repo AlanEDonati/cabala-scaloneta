@@ -61,21 +61,31 @@ function entrarAApp() {
         gritoMundial.play().catch(error => console.warn("Error al iniciar audio:", error));
     }
 
-    // 2. Iniciamos la música retro de fondo después de un breve delay (ej. 4 segundos)
-    // para que no se tapen entre sí al principio
-   setTimeout(() => {
-    // Solo arranca si musicaRetro existe y NO se está reproduciendo ya algo más
-    if (musicaRetro && musicaRetro.paused) { 
-        musicaRetro.play().catch(() => {});
+    // --- 🚀 TRUCO DE DESBLOQUEO PARA LA MÚSICA RETRO ---
+    // La arrancamos y pausamos al instante para que el navegador nos dé permiso
+    // de usarla después en el setTimeout sin problemas.
+    if (musicaRetro) {
+        musicaRetro.play().then(() => {
+            musicaRetro.pause();
+            musicaRetro.currentTime = 0;
+        }).catch(e => console.warn("Esperando permiso para audio retro"));
     }
-}, 4000);
 
-    // 3. "Pre-cargamos" los efectos para que no haya delay en los botones
+    // 2. Iniciamos la música retro de fondo después del delay
+    setTimeout(() => {
+        if (musicaRetro && musicaRetro.paused) { 
+            // Subimos un poquito el volumen por si acaso
+            musicaRetro.volume = 0.20; 
+            musicaRetro.play().catch(e => console.error("No se pudo iniciar el audio retro:", e));
+        }
+    }, 4000);
+
+    // 3. "Pre-cargamos" los efectos
     sonidoGol.load();
     sonidoGritoGol.load();
     sonidoClick.load();
 
-    // 4. Efecto visual de desaparición de la bienvenida
+    // 4. Efecto visual de desaparición
     const bienvenida = document.getElementById("pantallaBienvenida");
     if (bienvenida) {
         bienvenida.style.transition = "opacity 0.5s ease";
@@ -87,7 +97,6 @@ function entrarAApp() {
     
     console.log("⚽ Mística retro activada y audio desbloqueado.");
 }
-
 function tocarClick() {
     sonidoClick.currentTime = 0;
     sonidoClick.play().catch(() => {}); 
