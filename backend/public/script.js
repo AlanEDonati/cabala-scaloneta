@@ -344,14 +344,15 @@ async function guardarCabala() {
             // 3. Limpiamos el input
             document.getElementById("cabalaInput").value = "";
             
-            // 4. CAMBIO DE SECCIÓN (Importante: esto va PRIMERO)
-            // Nos movemos a cábalas para que Messi no aparezca sobre el Store
+            // 4. CAMBIO DE SECCIÓN
             mostrarSeccion('cabalas');
             
             // 5. PAUSA DE SEGURIDAD (500ms)
-            // Esperamos medio segundo para que la pantalla se acomode antes del festejo
             setTimeout(() => {
                 verCabalas(); // Refrescamos la lista de fondo
+                
+                // --- 🎉 ¡LANZAMOS LOS PAPELITOS AQUÍ! ---
+                lanzarPapelitos(); 
                 
                 // 6. LANZAMOS A MESSI Y EL SONIDO
                 mostrarModal(
@@ -585,6 +586,11 @@ async function guardarPrediccion() {
                 sonidoGritoGol.play().catch(e => console.warn("El audio falló:", e));
             }
 
+            // --- 🎉 ¡LANZAMOS LOS PAPELITOS AQUÍ! ---
+            if (typeof lanzarPapelitos === "function") {
+                lanzarPapelitos();
+            }
+
             // 2. Sumamos 5 puntos con animación voladora (+5 PTS)
             sumarPuntos(5, window.event);
             
@@ -600,4 +606,32 @@ async function guardarPrediccion() {
     } catch (e) {
         alert("❌ Error de conexión con el servidor.");
     }
+}
+
+function lanzarPapelitos() {
+    const duracion = 3 * 1000; // 3 segundos de fiesta
+    const final = Date.now() + duracion;
+
+    const colores = ['#74ACDF', '#FFFFFF', '#F1B82D']; // Celeste, Blanco, Dorado
+
+    (function frame() {
+        confetti({
+            particleCount: 3,
+            angle: 60,
+            spread: 55,
+            origin: { x: 0 }, // Salen de la izquierda
+            colors: colores
+        });
+        confetti({
+            particleCount: 3,
+            angle: 120,
+            spread: 55,
+            origin: { x: 1 }, // Salen de la derecha
+            colors: colores
+        });
+
+        if (Date.now() < final) {
+            requestAnimationFrame(frame);
+        }
+    }());
 }

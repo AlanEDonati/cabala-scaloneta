@@ -737,6 +737,35 @@ button:disabled {
     transform: none !important;
 }
 
+/* Definimos la animación de rotación */
+@keyframes girarPelota {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* Aplicamos la clase a la imagen de la pelota */
+.pelota-inicio {
+    width: 80px; /* o el tamaño que tengas */
+    animation: girarPelota 3s linear infinite;
+    filter: drop-shadow(0 5px 15px rgba(0,0,0,0.3)); /* Le da profundidad */
+}
+
+@keyframes latido {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+.btn-vamos {
+    animation: latido 2s infinite ease-in-out;
+}
+
+.product-card:hover {
+    transform: translateY(-10px) rotate(1deg);
+    transition: all 0.3s ease;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+}
+
 </style>
 
 </head>
