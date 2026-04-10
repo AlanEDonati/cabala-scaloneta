@@ -119,27 +119,12 @@ function obtenerNivel(pts) {
 }
 
 function mostrarNivel() {
-    // Usamos la función calcularNivel que es la más completa
     const info = calcularNivel(puntos);
-    const el = document.getElementById("usuarioActivoNivel"); 
+    const el = document.getElementById("nivelUsuario"); // Corregido: antes decía usuarioActivoNivel
     const barra = document.getElementById("barraProgreso");
     
-    if (el) el.innerText = `Rango: ${info.nombre} (${puntos} pts)`;
+    if (el) el.innerText = `Nivel: ${info.nombre} (${puntos} pts)`;
     if (barra) barra.style.width = info.porcentaje + "%";
-}
-function actualizarBarraProgreso(puntosTotales) {
-    const infoNivel = calcularNivel(puntosTotales);
-    
-    const textoNivel = document.getElementById("nivelUsuario");
-    const barra = document.getElementById("barraProgreso");
-
-    if (textoNivel) {
-        textoNivel.innerText = `Nivel: ${infoNivel.nombre} (${puntosTotales} pts)`;
-    }
-    
-    if (barra) {
-        barra.style.width = infoNivel.porcentaje + "%";
-    }
 }
 
 
@@ -167,7 +152,8 @@ function mostrarUsuario() {
 }
 
 async function crearUsuario() {
-    const username = document.getElementById("username").value.trim();
+    const usernameInput = document.getElementById("username");
+    const username = usernameInput ? usernameInput.value.trim() : "";
     
     if (!username) return alert("⚠️ ¡Escribí un nombre, pibe! No podés ser un jugador anónimo.");
 
@@ -178,9 +164,8 @@ async function crearUsuario() {
             body: JSON.stringify({ username })
         });
 
-        // --- MANEJO DE NOMBRES REPETIDOS O ERRORES ---
+        // --- MANEJO DE ERRORES (Nombres repetidos, etc.) ---
         if (!res.ok) {
-            // Si el servidor responde 400 o 409 (común para "Ya existe")
             if (res.status === 400 || res.status === 409) {
                 return alert("❌ ¡Ese nombre ya está en la lista de buena fe! Elegí otro apodo.");
             }
@@ -194,16 +179,20 @@ async function crearUsuario() {
         localStorage.setItem("username", user.username);
         localStorage.setItem("puntos", user.puntos || 0);
 
-        // 2. Feedback visual y lanzar papelitos (si ya los tenés cargados)
+        // 2. Sincronizamos la variable global de puntos
+        // Esto es CLAVE para que mostrarNivel() no lea el valor viejo
+        puntos = parseInt(user.puntos) || 0;
+
+        // 3. Feedback visual (Papelitos)
         if (typeof lanzarPapelitos === "function") lanzarPapelitos();
         
         alert(`🇦🇷 ¡Bienvenido a la Scaloneta, ${user.username}!`);
         
-        // 3. Actualizamos la interfaz inmediatamente
-        mostrarUsuario(); 
-        actualizarBarraProgreso(user.puntos || 0); 
+        // 4. Actualizamos la interfaz inmediatamente
+        mostrarUsuario(); // Muestra el nombre en el header
+        mostrarNivel();   // Dibuja la barra de progreso y el rango (Paso 3 corregido)
         
-        // 4. Movemos al usuario a la sección principal
+        // 5. Movemos al usuario a la sección principal
         mostrarSeccion('home'); 
 
     } catch (e) { 
@@ -630,10 +619,10 @@ function verCabalasTrending(cabalas) {
 
 // ================= GUARDAR PREDICCIÓN (FALTANTE) =================
 async function guardarPrediccion() {
-    // 0. Sonido de click al tocar el botón (Feedback inmediato)
+    // 0. Sonido de click al tocar el botón
     if (typeof tocarClick === "function") tocarClick();
 
-    // 1. Verificación de usuario con redirección
+    // 1. Verificación de usuario
     const userId = localStorage.getItem("user_id");
     if (!userId) {
         alert("⚠️ ¡Epa! Tenés que unirte a la Scaloneta primero para predecir.");
@@ -641,11 +630,21 @@ async function guardarPrediccion() {
         return;
     }
 
-    const matchId = document.getElementById("matchSelect").value;
-    const scoreA = document.getElementById("scoreA")?.value; 
-    const scoreB = document.getElementById("scoreB")?.value;
+    // 2. Captura de elementos con validación de existencia (los "escudos")
+    const selectEl = document.getElementById("matchSelect");
+    const inputA = document.getElementById("scoreA");
+    const inputB = document.getElementById("scoreB");
 
-    // Validación de campos vacíos
+    // Verificamos que el selector de partido tenga un valor
+    if (!selectEl || !selectEl.value) {
+        return alert("⚠️ Seleccioná un partido, ¡no te hagas el distraído!");
+    }
+
+    const matchId = selectEl.value;
+    const scoreA = inputA ? inputA.value : "";
+    const scoreB = inputB ? inputB.value : "";
+
+    // 3. Validación de campos vacíos
     if (scoreA === "" || scoreB === "") {
         return alert("⚠️ Poné los goles, ¡no seas pecho frío!");
     }
@@ -663,31 +662,33 @@ async function guardarPrediccion() {
         });
 
         if (res.ok) {
-            // --- ⚽ ¡MOMENTO DE GLORIA! ⚽ ---
-            if (sonidoGritoGol) {
-                sonidoGritoGol.currentTime = 0; // Reiniciamos por si acaso
-                sonidoGritoGol.play().catch(e => console.warn("El audio falló:", e));
+            // --- ⚽ EFECTOS DE VICTORIA ---
+            if (typeof sonidoGritoGol !== 'undefined') {
+                sonidoGritoGol.currentTime = 0;
+                sonidoGritoGol.play().catch(e => console.warn("Audio bloqueado por el navegador"));
             }
 
-            // --- 🎉 ¡LANZAMOS LOS PAPELITOS AQUÍ! ---
             if (typeof lanzarPapelitos === "function") {
                 lanzarPapelitos();
             }
 
-            // 2. Sumamos 5 puntos con animación voladora (+5 PTS)
+            // Sumamos puntos y animamos
             sumarPuntos(5, window.event);
             
             alert("✅ ¡Predicción guardada! Sumaste puntos por participar.");
             
-            // Limpiamos los inputs para la próxima
-            document.getElementById("scoreA").value = "";
-            document.getElementById("scoreB").value = "";
+            // Limpiamos los inputs
+            if (inputA) inputA.value = "";
+            if (inputB) inputB.value = "";
+
         } else {
+            // Manejo de errores del servidor (ej: ya predijo ese partido)
             const errorMsg = await res.text();
             alert("❌ " + (errorMsg || "Ya enviaste una predicción para este partido."));
         }
     } catch (e) {
-        alert("❌ Error de conexión con el servidor.");
+        console.error("Error en la predicción:", e);
+        alert("❌ Error de conexión con el servidor. Intentá de nuevo en un ratito.");
     }
 }
 
