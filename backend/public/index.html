@@ -854,6 +854,14 @@ button:disabled {
     text-align: center;
 }
 
+@keyframes brilloPuntos {
+    0% { transform: scale(1); color: white; }
+    50% { transform: scale(1.2); color: #D4AF37; text-shadow: 0 0 10px #D4AF37; }
+    100% { transform: scale(1); color: white; }
+}
+.animar-puntos {
+    animation: brilloPuntos 0.8s ease-in-out;
+}
 </style>
 
 </head>
@@ -904,21 +912,26 @@ button:disabled {
  </div>
 
 <div id="predicciones" style="display:none" class="card">
-<h2>Tirá tu Pronóstico ⚽</h2>
-<div class="match-form">
-<select id="matchSelect"></select>
-<div class="score-inputs">
- <input type="number" id="scoreA" placeholder="Local">
- <span>vs</span>
-<input type="number" id="scoreB" placeholder="Rival">
+    <h2>Tirá tu Pronóstico ⚽</h2>
+    <div class="match-form">
+        <label for="matchSelect" style="display:block; margin-bottom:5px; font-size:0.8rem; opacity:0.8;">Seleccioná el partido:</label>
+        <select id="matchSelect"></select>
+        
+        <div class="score-inputs">
+            <input type="number" id="scoreA" min="0" placeholder="0">
+            <span class="vs-text">vs</span>
+            <input type="number" id="scoreB" min="0" placeholder="0">
+        </div>
+        
+        <button onclick="guardarPrediccion()" class="btn-full btn-vamos">Enviar Predicción</button>
+    </div>
+    
+    <h3 style="margin-top:30px; border-top: 1px solid rgba(255,255,255,0.1); padding-top:20px;">
+        📅 Próximos Partidos
+    </h3>
+    <div id="listaPartidos" class="grid-list">
+        </div>
 </div>
-<button onclick="guardarPrediccion()" class="btn-full">Enviar Predicción</button>
-</div>
- 
- <h3>Próximos Partidos</h3>
- <div id="listaPartidos" class="grid-list">
- </div>
- </div>
 
 <div id="cabalas" style="display:none" class="card">
 

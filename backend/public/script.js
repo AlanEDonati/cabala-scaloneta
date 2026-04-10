@@ -34,15 +34,15 @@ window.onload = function() {
     cargarPartidos();
     verCabalas();
     verRanking();
-    verHinchasActivos();
+    verHinchasActivos(); // Esta es la carga inicial
     mostrarUsuario();
     mostrarNivel();
     cargarStore();
-    
-    // NOTA: El audio no arranca acá porque el navegador lo bloquea.
-    // Arrancará cuando el usuario toque el botón "¡VAMOS ARGENTINA!" del modal.
-};
 
+    // --- PUNTO 2: ACTUALIZACIÓN AUTOMÁTICA ---
+    // Esto hace que verHinchasActivos se ejecute solo cada 30 segundos
+    setInterval(verHinchasActivos, 30000); 
+};
 function detenerMusica() {
     // Incluimos las nuevas variables: gritoMundial y musicaRetro
     const audios = [gritoMundial, musicaRetro, sonidoGol, sonidoGritoGol];
@@ -106,8 +106,23 @@ function sumarPuntos(cantidad, evento) {
     puntos += cantidad;
     localStorage.setItem("puntos", puntos);
     
-    // Animación visual de +PTS
+    // 1. Efecto de brillo y escala en el texto del nivel
+    const elPuntos = document.getElementById("nivelUsuario");
+    if (elPuntos) {
+        // Quitamos la clase por si ya estaba (para poder reiniciar la animación)
+        elPuntos.classList.remove("animar-puntos");
+        
+        // Truco técnico: forzamos un "reflow" para que el navegador note que sacamos la clase
+        void elPuntos.offsetWidth; 
+        
+        // Volvemos a agregar la clase para que brille
+        elPuntos.classList.add("animar-puntos");
+    }
+
+    // 2. Animación visual de los puntos voladores (+5 PTS)
     crearAnimacionPuntos(cantidad, evento);
+    
+    // 3. Actualizamos la barra de progreso y el texto
     mostrarNivel();
 }
 
@@ -582,15 +597,16 @@ function cerrarModal() {
 }
 
 function compartirCabala(texto) {
-    const url = "https://twitter.com/intent/tweet?text=" + encodeURIComponent(`Mi cábala: "${texto}" 🇦🇷 Votá acá: ${API_BASE_URL}`);
-    window.open(url, "_blank");
+    // Limpiamos el texto para que la URL sea válida
+    const textoSeguro = encodeURIComponent(`Mi cábala para la Scaloneta: "${texto}" 🇦🇷 Votá la mía acá:`);
+    const urlApp = encodeURIComponent(window.location.href);
+    window.open(`https://twitter.com/intent/tweet?text=${textoSeguro}&url=${urlApp}`, "_blank");
 }
 
 function invitarVotarCabala(texto) {
-    const url = "https://wa.me/?text=" + encodeURIComponent(`¡Votá mi cábala de la Scaloneta! ⚽ "${texto}" 👇\n${API_BASE_URL}`);
-    window.open(url, "_blank");
+    const textoSeguro = encodeURIComponent(`¡Votá mi cábala de la Scaloneta! ⚽\n\n"${texto}"\n\nEntrá acá 👇\n${window.location.href}`);
+    window.open(`https://wa.me/?text=${textoSeguro}`, "_blank");
 }
-
 async function verHinchasActivos() {
     try {
         const res = await fetch(`${API_BASE_URL}/users`);
