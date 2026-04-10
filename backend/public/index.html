@@ -743,13 +743,22 @@ button:disabled {
     to { transform: rotate(360deg); }
 }
 
-/* Aplicamos la clase a la imagen de la pelota */
-.pelota-inicio {
-    width: 80px; /* o el tamaño que tengas */
-    animation: girarPelota 3s linear infinite;
-    filter: drop-shadow(0 5px 15px rgba(0,0,0,0.3)); /* Le da profundidad */
+/* 1. Animación de rotación (Base para que todo gire) */
+@keyframes girarPelota {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
 }
 
+/* 2. Clase específica para la pelota del título H1 */
+.pelota-h1 {
+    display: inline-block; /* Fundamental para que los emojis puedan rotar */
+    animation: girarPelota 3s linear infinite;
+    vertical-align: middle;
+    margin-left: 10px;
+    filter: drop-shadow(0 2px 5px rgba(0,0,0,0.2));
+}
+
+/* 3. El resto de tus animaciones se mantienen igual */
 @keyframes latido {
     0% { transform: scale(1); }
     50% { transform: scale(1.05); }
@@ -765,7 +774,6 @@ button:disabled {
     transition: all 0.3s ease;
     box-shadow: 0 10px 20px rgba(0,0,0,0.2);
 }
-
 </style>
 
 </head>
@@ -776,7 +784,7 @@ button:disabled {
     
     <div style="margin-bottom: 20px; font-size: 80px;">🏆</div>
 
-    <img src="https://img.freepik.com/vector-premium/pelota-futbol-estilo-dibujos-animados-aislado-fondo-blanco_1025550-141.jpg" class="pelota-inicio" style="width: 80px; margin-bottom: 20px;">
+
     
     <h1 style="margin: 0 0 10px 0; font-size: 2.5rem; text-shadow: 2px 2px 4px rgba(0,0,0,0.3);">CÁBALA SCALONETA</h1>
     <p style="font-size: 1.1rem; margin-bottom: 30px; opacity: 0.9;">Activá la mística para continuar</p>
@@ -797,7 +805,7 @@ button:disabled {
 </div>
 
 
-<h1>La Cábala de la Scaloneta ⚽</h1>
+<h1>La Cábala de la Scaloneta <span class="pelota-h1">⚽</span></h1>
 
 <div class="menu">
 
