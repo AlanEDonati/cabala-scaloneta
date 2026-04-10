@@ -463,17 +463,21 @@ function mostrarModal(titulo, mensaje, imagen) {
     const i = document.getElementById("imgFestejo");
     const modal = document.getElementById("modalGol");
 
-    // 1. Cargamos textos (siempre verificando que existan los elementos)
+    // 1. Cargamos textos
     if (t) t.innerText = titulo;
     if (m) m.innerText = mensaje;
     
-    // 2. Cargamos la imagen con los estilos de control
-    if (i && imagen) {
-        i.src = imagen;
-        i.style.display = "block";
-        // Aseguramos que no se deforme (esto ayuda por si el CSS falla)
-        i.style.maxHeight = "40vh";
-        i.style.objectFit = "contain";
+    // 2. Cargamos la imagen con control total
+    if (i) {
+        if (imagen) {
+            i.src = imagen;
+            i.style.display = "block";
+            i.style.maxHeight = "40vh";
+            i.style.objectFit = "contain";
+            i.style.margin = "0 auto 15px"; // Centrado automático
+        } else {
+            i.style.display = "none"; // Si no hay imagen, la ocultamos para no ver el icono roto
+        }
     }
     
     // 3. Mostramos el modal
@@ -481,16 +485,19 @@ function mostrarModal(titulo, mensaje, imagen) {
         modal.style.display = "flex";
     }
 
-    // 4. LÓGICA DE AUDIO (Usando el objeto 'new Audio' que creamos arriba)
-    if (sonidoGol) {
-        sonidoGol.muted = false; 
-        sonidoGol.volume = 1.0; 
-        sonidoGol.currentTime = 0; 
+    // 4. LÓGICA DE AUDIO
+    // Usamos sonidoGol si existe, o sonidoGritoGol según como lo tengas declarado
+    const audioAReproducir = typeof sonidoGol !== 'undefined' ? sonidoGol : null;
 
-        // Un pequeño delay de 200ms es el estándar de oro para móviles
+    if (audioAReproducir) {
+        audioAReproducir.muted = false; 
+        audioAReproducir.volume = 1.0; 
+        audioAReproducir.currentTime = 0; 
+
+        // El delay de 200ms ayuda a que el modal cargue antes que el sonido
         setTimeout(() => {
-            sonidoGol.play().catch(error => {
-                console.warn("El audio requiere un toque previo en la pantalla.", error);
+            audioAReproducir.play().catch(error => {
+                console.warn("Bloqueo de audio: el usuario debe interactuar primero.", error);
             });
         }, 200); 
     }
@@ -609,28 +616,26 @@ async function guardarPrediccion() {
 }
 
 function lanzarPapelitos() {
-    const duracion = 3 * 1000; // 3 segundos de fiesta
-    const final = Date.now() + duracion;
-
-    const colores = ['#74ACDF', '#FFFFFF', '#F1B82D']; // Celeste, Blanco, Dorado
+    const duration = 3 * 1000;
+    const end = Date.now() + duration;
 
     (function frame() {
         confetti({
             particleCount: 3,
             angle: 60,
             spread: 55,
-            origin: { x: 0 }, // Salen de la izquierda
-            colors: colores
+            origin: { x: 0 },
+            colors: ['#74ACDF', '#ffffff', '#D4AF37'] // Celeste, blanco y oro
         });
         confetti({
             particleCount: 3,
             angle: 120,
             spread: 55,
-            origin: { x: 1 }, // Salen de la derecha
-            colors: colores
+            origin: { x: 1 },
+            colors: ['#74ACDF', '#ffffff', '#D4AF37']
         });
 
-        if (Date.now() < final) {
+        if (Date.now() < end) {
             requestAnimationFrame(frame);
         }
     }());
