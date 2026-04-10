@@ -119,24 +119,30 @@ function obtenerNivel(pts) {
 }
 
 function mostrarNivel() {
-    const nivel = obtenerNivel(puntos);
-    const el = document.getElementById("usuarioActivoNivel"); // Asegurate que el ID coincida con tu HTML
+    // Usamos la función calcularNivel que es la más completa
+    const info = calcularNivel(puntos);
+    const el = document.getElementById("usuarioActivoNivel"); 
     const barra = document.getElementById("barraProgreso");
     
-    if (el) el.innerText = `Rango: ${nivel} (${puntos} pts)`;
+    if (el) el.innerText = `Rango: ${info.nombre} (${puntos} pts)`;
+    if (barra) barra.style.width = info.porcentaje + "%";
+}
+function actualizarBarraProgreso(puntosTotales) {
+    const infoNivel = calcularNivel(puntosTotales);
+    
+    const textoNivel = document.getElementById("nivelUsuario");
+    const barra = document.getElementById("barraProgreso");
+
+    if (textoNivel) {
+        textoNivel.innerText = `Nivel: ${infoNivel.nombre} (${puntosTotales} pts)`;
+    }
     
     if (barra) {
-        // --- 🎯 EL CAMBIO ESTÁ ACÁ ---
-        // Usamos el símbolo '%' (módulo) para que la barra siempre 
-        // represente el progreso hacia los próximos 100 puntos.
-        let progreso = (puntos % 100); 
-        
-        // Si justo tenés 0 puntos, le ponemos un mínimo de 2% para que se vea un poquito de color
-        if (progreso === 0 && puntos > 0) progreso = 100; 
-
-        barra.style.width = progreso + "%";
+        barra.style.width = infoNivel.porcentaje + "%";
     }
 }
+
+
 function crearAnimacionPuntos(cantidad, e) {
     const span = document.createElement("span");
     span.className = "puntos-flotantes";
@@ -161,19 +167,49 @@ function mostrarUsuario() {
 }
 
 async function crearUsuario() {
-    const username = document.getElementById("username").value;
+    const username = document.getElementById("username").value.trim();
+    
+    if (!username) return alert("⚠️ ¡Escribí un nombre, pibe! No podés ser un jugador anónimo.");
+
     try {
         const res = await fetch(`${API_BASE_URL}/users`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ username })
         });
+
+        // --- MANEJO DE NOMBRES REPETIDOS O ERRORES ---
+        if (!res.ok) {
+            // Si el servidor responde 400 o 409 (común para "Ya existe")
+            if (res.status === 400 || res.status === 409) {
+                return alert("❌ ¡Ese nombre ya está en la lista de buena fe! Elegí otro apodo.");
+            }
+            throw new Error("Error en el servidor");
+        }
+
         const user = await res.json();
+
+        // 1. Guardamos en la memoria del navegador (Persistencia)
         localStorage.setItem("user_id", user.id);
         localStorage.setItem("username", user.username);
-        alert("Usuario creado con éxito");
-        mostrarUsuario();
-    } catch (e) { console.error("Error al crear usuario", e); }
+        localStorage.setItem("puntos", user.puntos || 0);
+
+        // 2. Feedback visual y lanzar papelitos (si ya los tenés cargados)
+        if (typeof lanzarPapelitos === "function") lanzarPapelitos();
+        
+        alert(`🇦🇷 ¡Bienvenido a la Scaloneta, ${user.username}!`);
+        
+        // 3. Actualizamos la interfaz inmediatamente
+        mostrarUsuario(); 
+        actualizarBarraProgreso(user.puntos || 0); 
+        
+        // 4. Movemos al usuario a la sección principal
+        mostrarSeccion('home'); 
+
+    } catch (e) { 
+        console.error("Error al crear usuario", e);
+        alert("❌ No se pudo unir a la Scaloneta. Revisá tu conexión o intentá más tarde.");
+    }
 }
 
 async function mostrarSeccion(seccion) {
@@ -422,6 +458,7 @@ async function verRanking() {
         const data = await res.json();
         const lista = document.getElementById("listaRanking");
         if (!lista) return;
+
         lista.innerHTML = data.map((r, i) => `
             <div class="ranking-item">
                 <div class="rank-pos">${i + 1}</div>
@@ -429,21 +466,56 @@ async function verRanking() {
                 <div class="rank-pts">${r.puntos || 0} PTS</div>
             </div>
         `).join('');
-    } catch (e) {}
+    } catch (e) {
+        console.error("Error en ranking:", e);
+    }
 }
 
 async function cargarPartidos() {
     try {
         const res = await fetch(`${API_BASE_URL}/matches`);
+        if (!res.ok) throw new Error("No se pudieron cargar los partidos");
+        
         const matches = await res.json();
         const lista = document.getElementById("listaPartidos");
-if (lista) lista.innerHTML = matches.map(m => `
-    <li>
-        <strong>${m.team_a} vs ${m.team_b}</strong> 
-        <small>(${new Date(m.match_date).toLocaleDateString()})</small>
-    </li>
-`).join('');
-    } catch (e) {}
+        if (!lista) return;
+
+        const banderas = {
+            "argentina": "ar", "méxico": "mx", "polonia": "pl",
+            "arabia saudita": "sa", "francia": "fr", "australia": "au",
+            "dinamarca": "dk", "túnez": "tn", "brasil": "br",
+            "serbia": "rs", "portugal": "pt", "ghana": "gh",
+            "uruguay": "uy", "corea del sur": "kr", "ecuador": "ec", "senegal": "sn"
+        };
+
+        lista.innerHTML = matches.map(m => {
+            const codeA = banderas[m.team_a.toLowerCase()] || 'un';
+            const codeB = banderas[m.team_b.toLowerCase()] || 'un';
+            
+            const fecha = new Date(m.match_date).toLocaleDateString('es-AR', {
+                day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit'
+            });
+
+            // AQUÍ ESTABA EL ERROR: Faltaba cerrar el string y el div
+            return `
+            <div class="match-card" style="position: relative; display: flex; align-items: center; justify-content: space-between; background: rgba(255,255,255,0.08); margin-bottom: 12px; padding: 20px 15px 25px 15px; border-radius: 15px; border: 1px solid rgba(212, 175, 55, 0.2); backdrop-filter: blur(5px); color: white;">
+                <div style="flex: 1; text-align: right; display: flex; align-items: center; justify-content: flex-end; gap: 10px;">
+                    <span style="font-weight: bold; font-size: 0.9rem;">${m.team_a}</span>
+                    <img src="https://flagcdn.com/w40/${codeA}.png" width="30" style="border-radius: 3px;">
+                </div>
+                <div style="padding: 0 15px; color: #D4AF37; font-weight: 900; font-size: 1.1rem;">VS</div>
+                <div style="flex: 1; text-align: left; display: flex; align-items: center; justify-content: flex-start; gap: 10px;">
+                    <img src="https://flagcdn.com/w40/${codeB}.png" width="30" style="border-radius: 3px;">
+                    <span style="font-weight: bold; font-size: 0.9rem;">${m.team_b}</span>
+                </div>
+                <div style="position: absolute; bottom: 6px; left: 0; width: 100%; font-size: 0.7rem; opacity: 0.6; text-align: center;">
+                    ${fecha} hs
+                </div>
+            </div>`;
+        }).join('');
+    } catch (e) {
+        console.error("Error al cargar partidos:", e);
+    }
 }
 
 async function cargarSelectorPartidos() {
@@ -452,10 +524,14 @@ async function cargarSelectorPartidos() {
         const matches = await res.json();
         const select = document.getElementById("matchSelect");
         if (!select) return;
-        select.innerHTML = matches.map(m => `<option value="${m.id}">${m.team_a} vs ${m.team_b}</option>`).join('');
-    } catch (e) {}
+        
+        // Agregamos un option inicial neutro
+        select.innerHTML = '<option value="" disabled selected>Seleccioná un partido</option>' + 
+            matches.map(m => `<option value="${m.id}">${m.team_a} vs ${m.team_b}</option>`).join('');
+    } catch (e) {
+        console.error("Error en selector:", e);
+    }
 }
-
 // ================= UTILIDADES (MODALES, COMPARTIR) =================
 function mostrarModal(titulo, mensaje, imagen) {
     const t = document.getElementById("modalTitulo");
@@ -639,4 +715,68 @@ function lanzarPapelitos() {
             requestAnimationFrame(frame);
         }
     }());
+}
+
+function calcularNivel(puntos) {
+    // Definimos los niveles: nombre y puntos mínimos para llegar
+    const niveles = [
+        { nombre: "Hincha de Sillón", min: 0 },
+        { nombre: "Cabulero Iniciado", min: 50 },
+        { nombre: "Místico de la Tribuna", min: 150 },
+        { nombre: "Estratega de Scaloni", min: 300 },
+        { nombre: "Guardián de las 3 Estrellas", min: 500 }
+    ];
+
+    // Buscamos en qué nivel está el usuario
+    let nivelActual = niveles[0];
+    let siguienteNivel = niveles[1];
+
+    for (let i = 0; i < niveles.length; i++) {
+        if (puntos >= niveles[i].min) {
+            nivelActual = niveles[i];
+            siguienteNivel = niveles[i + 1] || null; // Por si llega al nivel máximo
+        }
+    }
+
+    // Calculamos el porcentaje para la barra
+    let porcentaje = 100;
+    if (siguienteNivel) {
+        const rango = siguienteNivel.min - nivelActual.min;
+        const progresoEnRango = puntos - nivelActual.min;
+        porcentaje = (progresoEnRango / rango) * 100;
+    }
+
+    return { 
+        nombre: nivelActual.nombre, 
+        porcentaje: porcentaje,
+        puntosFaltantes: siguienteNivel ? siguienteNivel.min - puntos : 0
+    };
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+    // Cambié "nombre_hincha" por "username" para que coincida con crearUsuario
+    const nombreGuardado = localStorage.getItem("username");
+    const idGuardado = localStorage.getItem("user_id");
+
+    if (nombreGuardado && idGuardado) {
+        const homeDiv = document.getElementById("home");
+        if(homeDiv) {
+            homeDiv.innerHTML = `
+                <div class="fadeIn" style="text-align:center; padding: 20px;">
+                    <h2>¡Hola de nuevo, ${nombreGuardado}! 🇦🇷</h2>
+                    <p>Ya sos parte de la mística. ¡A sumar puntos!</p>
+                    <button onclick="cerrarSesion()" class="btn-filter" style="margin-top:10px">Cambiar de Usuario</button>
+                </div>
+            `;
+        }
+        // Llamamos a mostrarNivel que ya tiene los puntos del localStorage
+        mostrarNivel();
+    }
+});
+
+function cerrarSesion() {
+    if(confirm("¿Seguro que querés salir de la Scaloneta?")) {
+        localStorage.clear();
+        location.reload(); // Reinicia la app para pedir el nombre de nuevo
+    }
 }
