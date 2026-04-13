@@ -524,29 +524,33 @@ async function cargarRanking(tipo) {
     if (!lista) return;
     lista.innerHTML = `<p style="text-align:center; opacity:0.6; padding:20px;">Buscando en la base de datos...</p>`;
 
-    // Definimos qué ruta del backend llamar según el botón tocado
-    let endpoint = "/ranking"; // Default general
+    let endpoint = "/ranking"; 
     if (tipo === 'cabalas') endpoint = "/ranking-mistica";
     if (tipo === 'grupos') endpoint = "/ranking-grupos";
 
     try {
         const res = await fetch(`${API_BASE_URL}${endpoint}`);
-        const data = await res.json();
 
-        if (data.length === 0) {
+        // --- 🛡️ MEJORA DE SEGURIDAD: Validar respuesta ---
+        if (!res.ok) {
+            // Si el servidor tira 404 o 500, lanzamos error para que lo atrape el catch
+            throw new Error(`Servidor respondió con status ${res.status}`);
+        }
+
+        const data = await res.json(); 
+
+        if (!Array.isArray(data) || data.length === 0) {
             lista.innerHTML = `<p style="text-align:center; padding:20px;">Aún no hay datos para este ranking.</p>`;
             return;
         }
 
         // 4. RENDERIZAR RESULTADOS
         lista.innerHTML = data.map((item, i) => {
-            // Aplicamos clases especiales de CSS al primer puesto
             let claseEspecial = "";
             if (i === 0) {
                 claseEspecial = (tipo === 'cabalas') ? "mystic-glow" : "gold-glow";
             }
 
-            // Adaptamos el texto según si es usuario o nombre de grupo
             const nombre = item.username || item.group_name || "Sin nombre";
             const puntosDisplay = item.puntos || item.votos || 0;
             const unidad = (tipo === 'cabalas') ? "VOTOS" : "PTS";
@@ -562,10 +566,14 @@ async function cargarRanking(tipo) {
 
     } catch (e) {
         console.error("Error cargando ranking:", e);
-        lista.innerHTML = `<p style="color: #ff6b6b; text-align:center;">Error de conexión con el vestuario.</p>`;
+        // Si el error es el de JSON Parse o 404, mostramos un mensaje amigable
+        lista.innerHTML = `
+            <div style="text-align:center; padding:20px;">
+                <p style="color: #ff6b6b;">⚠️ El ranking de ${tipo.toUpperCase()} todavía está en el vestuario.</p>
+                <p style="font-size:0.8rem; opacity:0.6;">(Estará disponible pronto)</p>
+            </div>`;
     }
 }
-
 async function cargarPartidos() {
     try {
         const res = await fetch(`${API_BASE_URL}/matches`);
