@@ -814,7 +814,7 @@ function lanzarPapelitos() {
     (function frame() {
         // Lanzamiento desde la izquierda (Celeste y Blanco)
         confetti({
-            particleCount: 10, // Subimos de 3 a 10 por ráfaga
+            particleCount: 150, // Subimos de 3 a 10 por ráfaga
             angle: 60,
             spread: 60,
             origin: { x: 0, y: 0.7 },
@@ -823,7 +823,7 @@ function lanzarPapelitos() {
 
         // Lanzamiento desde la derecha (Celeste y Blanco)
         confetti({
-            particleCount: 10, // Subimos de 3 a 10 por ráfaga
+            particleCount: 150, // Subimos de 3 a 10 por ráfaga
             angle: 120,
             spread: 60,
             origin: { x: 1, y: 0.7 },
@@ -833,7 +833,7 @@ function lanzarPapelitos() {
         // Lanzamiento aleatorio central para llenar huecos
         if (Math.random() > 0.7) {
             confetti({
-                particleCount: 15,
+                particleCount: 150,
                 velocity: 30,
                 spread: 360,
                 origin: { x: Math.random(), y: Math.random() - 0.2 },
