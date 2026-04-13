@@ -862,6 +862,45 @@ button:disabled {
 .animar-puntos {
     animation: brilloPuntos 0.8s ease-in-out;
 }
+
+.btn-nav-rank {
+    background: transparent;
+    border: none;
+    color: white;
+    padding: 10px 5px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.btn-nav-rank.active {
+    background: var(--oro);
+    color: var(--oscuro);
+    font-weight: bold;
+}
+
+/* Efecto para el ganador del Viaje */
+.ganador-viaje {
+    border: 2px solid var(--oro);
+    box-shadow: 0 0 15px rgba(212, 175, 55, 0.4);
+    position: relative;
+    overflow: hidden;
+}
+
+.ganador-viaje::after {
+    content: "✈️ VIAJE";
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    font-size: 0.6rem;
+    background: var(--oro);
+    color: var(--oscuro);
+    padding: 2px 5px;
+    border-radius: 4px;
+    font-weight: bold;
+}
+
+
 </style>
 
 </head>
@@ -898,6 +937,8 @@ button:disabled {
 <button onclick="mostrarSeccion('cabalas')">Cábalas</button>
 
 <button onclick="mostrarSeccion('ranking')">Ranking</button>
+
+<button onclick="mostrarSeccion('grupos')">Grupos</button>
 
 <button onclick="mostrarSeccion('store')">Store</button>
 
@@ -956,8 +997,19 @@ button:disabled {
 </div>
 
 <div id="ranking" style="display:none" class="card">
-    <h2>Ranking de Hinchas 🏆</h2>
+    <h2>Tablas de Posiciones 🏆</h2>
+    
+    <div class="ranking-nav" style="display:flex; gap:5px; margin-bottom:20px; background:rgba(0,0,0,0.2); padding:5px; border-radius:10px;">
+        <button onclick="cargarRanking('general')" id="tabGen" class="btn-nav-rank active" style="flex:1; font-size:0.7rem;">⚽ General</button>
+        <button onclick="cargarRanking('cabalas')" id="tabCab" class="btn-nav-rank" style="flex:1; font-size:0.7rem;">✨ Mística</button>
+        <button onclick="cargarRanking('grupos')" id="tabGru" class="btn-nav-rank" style="flex:1; font-size:0.7rem;">👥 Grupos</button>
+    </div>
+
+    <div id="podioDestacado" style="margin-bottom:20px;"></div>
+
     <div id="listaRanking" class="ranking-container"></div>
+    
+    <p id="infoPremio" style="font-size:0.7rem; opacity:0.6; text-align:center; margin-top:15px;"></p>
 </div>
 
 <div id="store" style="display:none" class="card">
@@ -974,6 +1026,28 @@ button:disabled {
     <div class="store-grid"></div> 
 </div>
 
+</div>
+
+<div id="grupos" style="display:none" class="card">
+    <h2>🏆 Ligas Privadas</h2>
+    <div style="display:flex; gap:10px; margin-bottom:20px;">
+        <button onclick="toggleFormGrupo('unirse')" id="btnTabUnirse" style="flex:1; font-size:0.8rem; background:var(--oro); color:var(--oscuro);">Unirme</button>
+        <button onclick="toggleFormGrupo('crear')" id="btnTabCrear" style="flex:1; font-size:0.8rem; background:rgba(255,255,255,0.1);">Crear Grupo</button>
+    </div>
+
+    <div id="formUnirseGrupo">
+        <input id="joinGroupName" placeholder="Nombre del grupo">
+        <input type="password" id="joinGroupPass" placeholder="Llave de acceso">
+        <button onclick="unirseAGrupo()" class="btn-full btn-vamos">Entrar a la Liga</button>
+    </div>
+
+    <div id="formCrearGrupo" style="display:none;">
+        <input id="newGroupName" placeholder="Nombre de tu nueva liga">
+        <input type="password" id="newGroupPass" placeholder="Definir Llave (contraseña)">
+        <button onclick="crearGrupo()" class="btn-full" style="background:var(--oscuro); color:var(--oro); border:1px solid var(--oro);">Fundar Grupo</button>
+    </div>
+
+    <div id="rankingGrupoContenedor" style="margin-top:20px;"></div>
 </div>
 
 <div id="modalGol" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:999999; justify-content:center; align-items:center; padding:20px;">

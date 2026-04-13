@@ -218,24 +218,14 @@ async function crearUsuario() {
 
 async function mostrarSeccion(seccion) {
     // 0. CORTAR EL AUDIO ANTERIOR
-    // Esto evita que el himno o el arcade de inicio se pisen con los sonidos de la app
     detenerMusica();
 
-    // 1. DESBLOQUEO DE AUDIO (Cebado)
-    // Aprovechamos el click del menú para que el navegador nos dé permiso eterno
-    if (sonidoGol) {
-        sonidoGol.muted = true; 
-        sonidoGol.play().then(() => {
-            sonidoGol.pause();
-            sonidoGol.muted = false; 
-            sonidoGol.currentTime = 0;
-        }).catch(e => {
-            console.log("Esperando interacción para habilitar audio");
-        });
-    }
+    // 1. DESBLOQUEO DE AUDIO (Feedback sonoro de navegación)
+    if (typeof tocarClick === "function") tocarClick();
 
     // 2. LÓGICA DE VISIBILIDAD
-    const secciones = ["home", "predicciones", "cabalas", "ranking", "store"];
+    // Agregamos 'grupos' a la lista de secciones para que también se oculte
+    const secciones = ["home", "predicciones", "cabalas", "ranking", "store", "grupos"];
     secciones.forEach(s => {
         const el = document.getElementById(s);
         if (el) el.style.display = "none";
@@ -249,11 +239,27 @@ async function mostrarSeccion(seccion) {
     }
 
     // 3. CARGA DE DATOS POR SECCIÓN
-    if (seccion === 'ranking') verRanking();
-    if (seccion === 'cabalas') verCabalas();
+    if (seccion === 'ranking') {
+        // Por defecto, al entrar a Ranking, mostramos el General
+        cargarRanking('general'); 
+    }
+    
+    if (seccion === 'cabalas') {
+        verCabalas();
+    }
+    
     if (seccion === 'predicciones') { 
         cargarPartidos(); 
         cargarSelectorPartidos(); 
+    }
+
+    if (seccion === 'grupos') {
+        // Por defecto mostramos el formulario de "Unirse"
+        if (typeof toggleFormGrupo === "function") toggleFormGrupo('unirse');
+    }
+
+    if (seccion === 'store') {
+        cargarStore();
     }
 }
 // ================= SECCIÓN CÁBALAS =================
@@ -472,6 +478,91 @@ async function verRanking() {
         `).join('');
     } catch (e) {
         console.error("Error en ranking:", e);
+    }
+}
+
+// Switch entre Crear y Unirse en Grupos
+function toggleFormGrupo(modo) {
+    const unirse = document.getElementById('formUnirseGrupo');
+    const crear = document.getElementById('formCrearGrupo');
+    const btnUnirse = document.getElementById('btnTabUnirse');
+    const btnCrear = document.getElementById('btnTabCrear');
+
+    if (modo === 'unirse') {
+        unirse.style.display = 'block';
+        crear.style.display = 'none';
+        btnUnirse.style.background = 'var(--oro)';
+        btnCrear.style.background = 'rgba(255,255,255,0.1)';
+    } else {
+        unirse.style.display = 'none';
+        crear.style.display = 'block';
+        btnCrear.style.background = 'var(--oro)';
+        btnUnirse.style.background = 'rgba(255,255,255,0.1)';
+    }
+}
+
+// Switch entre los 3 Rankings
+async function cargarRanking(tipo) {
+    // 1. ACTUALIZAR ESTADO DE LOS BOTONES
+    document.querySelectorAll('.btn-nav-rank').forEach(b => b.classList.remove('active'));
+    
+    const tabs = { 'general': 'tabGen', 'cabalas': 'tabCab', 'grupos': 'tabGru' };
+    const tabActiva = document.getElementById(tabs[tipo]);
+    if (tabActiva) tabActiva.classList.add('active');
+
+    // 2. ACTUALIZAR TEXTO DE PREMIOS
+    const info = document.getElementById('infoPremio');
+    const textosPremios = {
+        'general': "🏆 VIAJE AL MUNDIAL para el #1. Sorteo entre el Top 100.",
+        'cabalas': "✨ VIAJE AL MUNDIAL para la Cábala más votada (Mística).",
+        'grupos': "👥 Merch AFA y Sponsors para el grupo con mejor promedio."
+    };
+    if (info) info.innerText = textosPremios[tipo];
+
+    // 3. PREPARAR CONTENEDOR Y URL
+    const lista = document.getElementById("listaRanking");
+    if (!lista) return;
+    lista.innerHTML = `<p style="text-align:center; opacity:0.6; padding:20px;">Buscando en la base de datos...</p>`;
+
+    // Definimos qué ruta del backend llamar según el botón tocado
+    let endpoint = "/ranking"; // Default general
+    if (tipo === 'cabalas') endpoint = "/ranking-mistica";
+    if (tipo === 'grupos') endpoint = "/ranking-grupos";
+
+    try {
+        const res = await fetch(`${API_BASE_URL}${endpoint}`);
+        const data = await res.json();
+
+        if (data.length === 0) {
+            lista.innerHTML = `<p style="text-align:center; padding:20px;">Aún no hay datos para este ranking.</p>`;
+            return;
+        }
+
+        // 4. RENDERIZAR RESULTADOS
+        lista.innerHTML = data.map((item, i) => {
+            // Aplicamos clases especiales de CSS al primer puesto
+            let claseEspecial = "";
+            if (i === 0) {
+                claseEspecial = (tipo === 'cabalas') ? "mystic-glow" : "gold-glow";
+            }
+
+            // Adaptamos el texto según si es usuario o nombre de grupo
+            const nombre = item.username || item.group_name || "Sin nombre";
+            const puntosDisplay = item.puntos || item.votos || 0;
+            const unidad = (tipo === 'cabalas') ? "VOTOS" : "PTS";
+
+            return `
+                <div class="ranking-item ${claseEspecial} fadeIn">
+                    <div class="rank-pos">${i + 1}</div>
+                    <div class="rank-name">${nombre}</div>
+                    <div class="rank-pts"><strong>${puntosDisplay}</strong> ${unidad}</div>
+                </div>
+            `;
+        }).join('');
+
+    } catch (e) {
+        console.error("Error cargando ranking:", e);
+        lista.innerHTML = `<p style="color: #ff6b6b; text-align:center;">Error de conexión con el vestuario.</p>`;
     }
 }
 
@@ -709,24 +800,38 @@ async function guardarPrediccion() {
 }
 
 function lanzarPapelitos() {
-    const duration = 3 * 1000;
+    const duration = 3 * 1000; // 3 segundos de gloria
     const end = Date.now() + duration;
 
     (function frame() {
+        // Lanzamiento desde la izquierda (Celeste y Blanco)
         confetti({
-            particleCount: 3,
+            particleCount: 10, // Subimos de 3 a 10 por ráfaga
             angle: 60,
-            spread: 55,
-            origin: { x: 0 },
-            colors: ['#74ACDF', '#ffffff', '#D4AF37'] // Celeste, blanco y oro
-        });
-        confetti({
-            particleCount: 3,
-            angle: 120,
-            spread: 55,
-            origin: { x: 1 },
+            spread: 60,
+            origin: { x: 0, y: 0.7 },
             colors: ['#74ACDF', '#ffffff', '#D4AF37']
         });
+
+        // Lanzamiento desde la derecha (Celeste y Blanco)
+        confetti({
+            particleCount: 10, // Subimos de 3 a 10 por ráfaga
+            angle: 120,
+            spread: 60,
+            origin: { x: 1, y: 0.7 },
+            colors: ['#74ACDF', '#ffffff', '#D4AF37']
+        });
+
+        // Lanzamiento aleatorio central para llenar huecos
+        if (Math.random() > 0.7) {
+            confetti({
+                particleCount: 15,
+                velocity: 30,
+                spread: 360,
+                origin: { x: Math.random(), y: Math.random() - 0.2 },
+                colors: ['#74ACDF', '#D4AF37']
+            });
+        }
 
         if (Date.now() < end) {
             requestAnimationFrame(frame);
@@ -792,8 +897,65 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 function cerrarSesion() {
-    if(confirm("¿Seguro que querés salir de la Scaloneta?")) {
-        localStorage.clear();
-        location.reload(); // Reinicia la app para pedir el nombre de nuevo
+    // Usamos un mensaje bien futbolero
+    if(confirm("¿Seguro que querés abandonar la concentración? Se borrarán los datos de esta sesión.")) {
+        
+        // 1. Borramos solo lo que pertenece a la Scaloneta
+        localStorage.removeItem("user_id");
+        localStorage.removeItem("username");
+        localStorage.removeItem("puntos");
+        
+        // Opcional: Si tenés un token de sesión o algo más, lo borrás acá
+        
+        // 2. Efecto visual opcional antes de recargar
+        document.body.style.opacity = "0.5";
+        document.body.style.transition = "opacity 0.5s";
+
+        // 3. Reiniciamos la app
+        setTimeout(() => {
+            location.reload(); 
+        }, 300);
     }
+}
+
+async function crearGrupo() {
+    const nombre = document.getElementById("newGroupName").value.trim();
+    const pass = document.getElementById("newGroupPass").value.trim();
+    const userId = localStorage.getItem("user_id");
+
+    if (!nombre || !pass) return alert("Poné nombre y clave para el grupo.");
+
+    try {
+        const res = await fetch(`${API_BASE_URL}/groups`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name: nombre, password: pass, creator_id: userId })
+        });
+        if (res.ok) {
+            alert("¡Grupo creado! Pasale el nombre y la clave a tus amigos.");
+            toggleFormGrupo('unirse');
+        } else {
+            alert("Ese nombre de grupo ya existe.");
+        }
+    } catch (e) { alert("Error de conexión"); }
+}
+
+async function unirseAGrupo() {
+    const nombre = document.getElementById("joinGroupName").value.trim();
+    const pass = document.getElementById("joinGroupPass").value.trim();
+    const userId = localStorage.getItem("user_id");
+
+    try {
+        const res = await fetch(`${API_BASE_URL}/groups/join`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name: nombre, password: pass, user_id: userId })
+        });
+        if (res.ok) {
+            alert("¡Ya sos parte de la banda!");
+            mostrarSeccion('home'); // O refrescar para mostrar el ranking del grupo
+        } else {
+            alert("Nombre o clave incorrectos.");
+        }
+    } catch (e) { alert("Error al unirse"); }
 }
