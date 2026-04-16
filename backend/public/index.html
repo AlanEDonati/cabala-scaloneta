@@ -959,10 +959,10 @@ button:disabled {
         <select id="matchSelect"></select>
         
         <div class="score-inputs">
-            <input type="number" id="scoreA" min="0" placeholder="0">
-            <span class="vs-text">vs</span>
-            <input type="number" id="scoreB" min="0" placeholder="0">
-        </div>
+    <input type="number" id="scoreA" min="0" value="0" oninput="this.value = Math.abs(this.value)">
+    <span class="vs-text">vs</span>
+    <input type="number" id="scoreB" min="0" value="0" oninput="this.value = Math.abs(this.value)">
+</div>
         
         <button onclick="guardarPrediccion()" class="btn-full btn-vamos">Enviar Predicción</button>
     </div>

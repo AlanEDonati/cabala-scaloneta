@@ -732,7 +732,7 @@ function verCabalasTrending(cabalas) {
     });
 }
 
-// ================= GUARDAR PREDICCIÓN (FALTANTE) =================
+// ================= GUARDAR PREDICCIÓN (CORREGIDO) =================
 async function guardarPrediccion() {
     // 0. Sonido de click al tocar el botón
     if (typeof tocarClick === "function") tocarClick();
@@ -745,32 +745,38 @@ async function guardarPrediccion() {
         return;
     }
 
-    // 2. Captura de elementos con validación de existencia (los "escudos")
+    // 2. Captura de elementos
     const selectEl = document.getElementById("matchSelect");
     const inputA = document.getElementById("scoreA");
     const inputB = document.getElementById("scoreB");
 
-    // Verificamos que el selector de partido tenga un valor
-    if (!selectEl || !selectEl.value) {
-        return alert("⚠️ Seleccioná un partido, ¡no te hagas el distraído!");
+    // Verificamos que los elementos existan en el HTML
+    if (!selectEl || !inputA || !inputB) {
+        console.error("Error: No se encontraron los inputs en el HTML.");
+        return;
     }
 
     const matchId = selectEl.value;
-    const scoreA = inputA ? inputA.value : "";
-    const scoreB = inputB ? inputB.value : "";
+    const scoreA = inputA.value;
+    const scoreB = inputB.value;
 
-    // 3. Validación de campos vacíos
+    // 3. Validación de campos vacíos (Permite el 0)
+    if (!matchId) {
+        return alert("⚠️ Seleccioná un partido, ¡no te hagas el distraído!");
+    }
+
     if (scoreA === "" || scoreB === "") {
-        return alert("⚠️ Poné los goles, ¡no seas pecho frío!");
+        return alert("⚠️ Poné los goles, ¡no seas pecho frío! (Aunque sea un 0)");
     }
 
     try {
+        // Usamos parseInt para asegurar que viajen como números al servidor
         const res = await fetch(`${API_BASE_URL}/predictions`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-                user_id: userId,
-                match_id: matchId,
+                user_id: parseInt(userId),
+                match_id: parseInt(matchId),
                 score_a: parseInt(scoreA),
                 score_b: parseInt(scoreB)
             })
@@ -780,30 +786,31 @@ async function guardarPrediccion() {
             // --- ⚽ EFECTOS DE VICTORIA ---
             if (typeof sonidoGritoGol !== 'undefined') {
                 sonidoGritoGol.currentTime = 0;
-                sonidoGritoGol.play().catch(e => console.warn("Audio bloqueado por el navegador"));
+                sonidoGritoGol.play().catch(e => console.warn("Audio bloqueado"));
             }
 
             if (typeof lanzarPapelitos === "function") {
                 lanzarPapelitos();
             }
 
-            // Sumamos puntos y animamos
-            sumarPuntos(5, window.event);
+            // Animación de puntos (si tenés la función sumarPuntos definida)
+            if (typeof sumarPuntos === "function") {
+                sumarPuntos(5, window.event);
+            }
             
             alert("✅ ¡Predicción guardada! Sumaste puntos por participar.");
             
-            // Limpiamos los inputs
-            if (inputA) inputA.value = "";
-            if (inputB) inputB.value = "";
+            // Limpiamos los inputs para la próxima
+            inputA.value = "";
+            inputB.value = "";
 
         } else {
-            // Manejo de errores del servidor (ej: ya predijo ese partido)
             const errorMsg = await res.text();
-            alert("❌ " + (errorMsg || "Ya enviaste una predicción para este partido."));
+            alert("❌ " + (errorMsg || "Error al guardar."));
         }
     } catch (e) {
         console.error("Error en la predicción:", e);
-        alert("❌ Error de conexión con el servidor. Intentá de nuevo en un ratito.");
+        alert("❌ Error de conexión. Revisá que el servidor esté prendido.");
     }
 }
 

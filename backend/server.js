@@ -107,17 +107,29 @@ app.get("/matches", async (req, res) => {
 app.post("/predictions", async (req, res) => {
   try {
     const { user_id, match_id, score_a, score_b } = req.body;
+
+    // Convertimos a número para asegurar que el "0" se trate como un valor real
+    // y no como un string vacío o un valor falsy.
+    const golesA = parseInt(score_a);
+    const golesB = parseInt(score_b);
+
+    // Validación de seguridad: verificamos que sean números (incluyendo el 0)
+    if (isNaN(golesA) || isNaN(golesB)) {
+      return res.status(400).send("Los goles deben ser números válidos.");
+    }
+
     const result = await db.query(
       `INSERT INTO predictions (user_id, match_id, score_a, score_b) 
-             VALUES ($1, $2, $3, $4)
-             ON CONFLICT (user_id, match_id) 
-             DO UPDATE SET score_a = EXCLUDED.score_a, score_b = EXCLUDED.score_b
-             RETURNING *`,
-      [user_id, match_id, score_a, score_b],
+       VALUES ($1, $2, $3, $4)
+       ON CONFLICT (user_id, match_id) 
+       DO UPDATE SET score_a = EXCLUDED.score_a, score_b = EXCLUDED.score_b
+       RETURNING *`,
+      [user_id, match_id, golesA, golesB], // Usamos las variables ya convertidas
     );
+
     res.json(result.rows[0]);
   } catch (error) {
-    console.error(error);
+    console.error("Error en predicciones:", error);
     res.status(500).send("Error al guardar predicción");
   }
 });
