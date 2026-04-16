@@ -732,12 +732,10 @@ function verCabalasTrending(cabalas) {
     });
 }
 
-// ================= GUARDAR PREDICCIÓN (CORREGIDO) =================
+// ================= GUARDAR PREDICCIÓN (ACTUALIZADO) =================
 async function guardarPrediccion() {
-    // 0. Sonido de click al tocar el botón
     if (typeof tocarClick === "function") tocarClick();
 
-    // 1. Verificación de usuario
     const userId = localStorage.getItem("user_id");
     if (!userId) {
         alert("⚠️ ¡Epa! Tenés que unirte a la Scaloneta primero para predecir.");
@@ -745,12 +743,10 @@ async function guardarPrediccion() {
         return;
     }
 
-    // 2. Captura de elementos
     const selectEl = document.getElementById("matchSelect");
     const inputA = document.getElementById("scoreA");
     const inputB = document.getElementById("scoreB");
 
-    // Verificamos que los elementos existan en el HTML
     if (!selectEl || !inputA || !inputB) {
         console.error("Error: No se encontraron los inputs en el HTML.");
         return;
@@ -760,7 +756,6 @@ async function guardarPrediccion() {
     const scoreA = inputA.value;
     const scoreB = inputB.value;
 
-    // 3. Validación de campos vacíos (Permite el 0)
     if (!matchId) {
         return alert("⚠️ Seleccioná un partido, ¡no te hagas el distraído!");
     }
@@ -770,7 +765,6 @@ async function guardarPrediccion() {
     }
 
     try {
-        // Usamos parseInt para asegurar que viajen como números al servidor
         const res = await fetch(`${API_BASE_URL}/predictions`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -783,24 +777,29 @@ async function guardarPrediccion() {
         });
 
         if (res.ok) {
-            // --- ⚽ EFECTOS DE VICTORIA ---
+            // --- ⚽ EFECTOS ---
             if (typeof sonidoGritoGol !== 'undefined') {
                 sonidoGritoGol.currentTime = 0;
                 sonidoGritoGol.play().catch(e => console.warn("Audio bloqueado"));
             }
 
-            if (typeof lanzarPapelitos === "function") {
-                lanzarPapelitos();
-            }
+            if (typeof lanzarPapelitos === "function") lanzarPapelitos();
 
-            // Animación de puntos (si tenés la función sumarPuntos definida)
+            // 1. Animamos visualmente (Local)
             if (typeof sumarPuntos === "function") {
                 sumarPuntos(5, window.event);
             }
             
+            // 2. 🔥 ESTA ES LA CLAVE: Recargar el ranking desde la base de datos
+            // Llamamos a cargarRanking para que traiga los puntos reales actualizados
+            if (typeof cargarRanking === "function") {
+                setTimeout(() => {
+                    cargarRanking('general'); 
+                }, 500); // Un pequeño delay para que la DB termine de procesar
+            }
+            
             alert("✅ ¡Predicción guardada! Sumaste puntos por participar.");
             
-            // Limpiamos los inputs para la próxima
             inputA.value = "";
             inputB.value = "";
 
@@ -810,10 +809,9 @@ async function guardarPrediccion() {
         }
     } catch (e) {
         console.error("Error en la predicción:", e);
-        alert("❌ Error de conexión. Revisá que el servidor esté prendido.");
+        alert("❌ Error de conexión.");
     }
 }
-
 function lanzarPapelitos() {
     const duration = 3 * 1000; // 3 segundos de gloria
     const end = Date.now() + duration;

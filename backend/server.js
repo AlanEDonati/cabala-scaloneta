@@ -107,25 +107,25 @@ app.get("/matches", async (req, res) => {
 app.post("/predictions", async (req, res) => {
   try {
     const { user_id, match_id, score_a, score_b } = req.body;
-
-    // Convertimos a número para asegurar que el "0" se trate como un valor real
-    // y no como un string vacío o un valor falsy.
     const golesA = parseInt(score_a);
     const golesB = parseInt(score_b);
 
-    // Validación de seguridad: verificamos que sean números (incluyendo el 0)
     if (isNaN(golesA) || isNaN(golesB)) {
       return res.status(400).send("Los goles deben ser números válidos.");
     }
 
+    // 1. Guardamos o actualizamos la predicción
     const result = await db.query(
       `INSERT INTO predictions (user_id, match_id, score_a, score_b) 
        VALUES ($1, $2, $3, $4)
        ON CONFLICT (user_id, match_id) 
        DO UPDATE SET score_a = EXCLUDED.score_a, score_b = EXCLUDED.score_b
        RETURNING *`,
-      [user_id, match_id, golesA, golesB], // Usamos las variables ya convertidas
+      [user_id, match_id, golesA, golesB]
     );
+
+    // 🔥 2. SUMAR PUNTOS POR PARTICIPACIÓN (Solo si querés que sume al predecir)
+    await db.query("UPDATE users SET puntos = puntos + 5 WHERE id = $1", [user_id]);
 
     res.json(result.rows[0]);
   } catch (error) {
@@ -136,26 +136,18 @@ app.post("/predictions", async (req, res) => {
 
 app.get("/ranking", async (req, res) => {
   try {
+    // Consultamos directamente la columna puntos de la tabla users
+    // Esto asegura que los 16 puntos que ya tenés se vean reflejados
     const result = await db.query(`
-            SELECT u.username, 
-            COALESCE(SUM(
-                CASE 
-                    WHEN p.score_a = m.score_a AND p.score_b = m.score_b THEN 3
-                    WHEN (p.score_a > p.score_b AND m.score_a > m.score_b) OR 
-                         (p.score_a < p.score_b AND m.score_a < m.score_b) OR 
-                         (p.score_a = p.score_b AND m.score_a = m.score_b) THEN 1
-                    ELSE 0 
-                END
-            ), 0) as puntos
-            FROM users u
-            LEFT JOIN predictions p ON u.id = p.user_id
-            LEFT JOIN matches m ON p.match_id = m.id
-            GROUP BY u.username
-            ORDER BY puntos DESC;
-        `);
+      SELECT username, puntos 
+      FROM users 
+      ORDER BY puntos DESC 
+      LIMIT 10
+    `);
+    
     res.json(result.rows);
   } catch (error) {
-    console.error(error);
+    console.error("Error al obtener el ranking:", error);
     res.status(500).send("Error en el ranking");
   }
 });
