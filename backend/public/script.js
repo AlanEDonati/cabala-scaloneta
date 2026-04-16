@@ -823,7 +823,7 @@ function lanzarPapelitos() {
 
         // Lanzamiento desde la derecha (Celeste y Blanco)
         confetti({
-            particleCount: 15, // Subimos de 3 a 10 por ráfaga
+            particleCount: 10, // Subimos de 3 a 10 por ráfaga
             angle: 120,
             spread: 60,
             origin: { x: 1, y: 0.7 },
@@ -833,7 +833,7 @@ function lanzarPapelitos() {
         // Lanzamiento aleatorio central para llenar huecos
         if (Math.random() > 0.7) {
             confetti({
-                particleCount: 15,
+                particleCount: 10,
                 velocity: 30,
                 spread: 360,
                 origin: { x: Math.random(), y: Math.random() - 0.2 },
@@ -966,4 +966,29 @@ async function unirseAGrupo() {
             alert("Nombre o clave incorrectos.");
         }
     } catch (e) { alert("Error al unirse"); }
+}
+
+// Función para tirar papelitos y mostrar puntos flotantes
+function efectoPuntos(cantidad, evento) {
+    const span = document.createElement("span");
+    span.innerText = `+${cantidad} PTS`;
+    span.className = "puntos-flotantes";
+    
+    // Si el usuario hizo click, sale de ahí, si no, del centro
+    span.style.left = (evento ? evento.pageX : window.innerWidth / 2) + "px";
+    span.style.top = (evento ? evento.pageY : window.innerHeight / 2) + "px";
+    
+    document.body.appendChild(span);
+    
+    // Confetti si es un puntaje alto
+    if(cantidad >= 10) {
+        confetti({
+            particleCount: 100,
+            spread: 70,
+            origin: { y: 0.6 },
+            colors: ['#74ACDF', '#ffffff', '#D4AF37']
+        });
+    }
+
+    setTimeout(() => span.remove(), 1200);
 }

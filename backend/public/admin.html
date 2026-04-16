@@ -179,23 +179,43 @@
     }
 
     async function guardarResultadoFinal() {
-        const match_id = document.getElementById("matchSelectAdmin").value;
-        const score_a = document.getElementById("finalScoreA").value;
-        const score_b = document.getElementById("finalScoreB").value;
-        if(score_a === "" || score_b === "") return alert("Faltan los goles, socio");
+    const match_id = document.getElementById("matchSelectAdmin").value;
+    const score_a = document.getElementById("finalScoreA").value;
+    const score_b = document.getElementById("finalScoreB").value;
 
-        const res = await fetch("/set-result", {
+    if (score_a === "" || score_b === "") return alert("Faltan los goles, socio");
+
+    if (!confirm(`¿Confirmás el resultado ${score_a}-${score_b}? Se repartirán puntos automáticamente.`)) return;
+
+    try {
+        const res = await fetch("/set-result", { // Asegurate que la URL sea la misma que en server.js
             method: "POST",
-            headers: {"Content-Type": "application/json"},
-            body: JSON.stringify({ match_id, score_a, score_b })
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ 
+                match_id, 
+                score_a: parseInt(score_a), 
+                score_b: parseInt(score_b) 
+            })
         });
 
-        if(res.ok) {
-            alert("¡Resultado guardado!");
-            location.reload();
+        if (res.ok) {
+            const mensaje = await res.text();
+            alert("✅ " + mensaje);
+            
+            // Limpiamos los campos para no mandarlos dos veces por error
+            document.getElementById("finalScoreA").value = "";
+            document.getElementById("finalScoreB").value = "";
+            
+            // Recargamos para ver si hay nuevos partidos
+            cargarPartidosAdmin(); 
+        } else {
+            alert("❌ Error en el servidor al guardar.");
         }
+    } catch (e) {
+        console.error("Error:", e);
+        alert("❌ Error de conexión.");
     }
-
+}
     // --- INICIO AL CARGAR ---
     cargarPartidosAdmin();
     listarProductosAdmin();
