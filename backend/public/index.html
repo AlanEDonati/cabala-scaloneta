@@ -923,18 +923,25 @@ button:disabled {
 }
 
 .estrella-contenedor small {
-    position: absolute; /* Esto hace que el número flote sobre la estrella */
-    color: #00355E; /* Azul oscuro para que se lea perfecto */
+    position: absolute; /* El número flota sobre la estrella */
+    color: white;       /* Blanco puro para que sea bien patrio */
     font-weight: 900;
     font-size: 0.9rem;
-    top: 55%; /* Lo baja un poquito para centrarlo visualmente */
+    top: 55%;           /* Centrado visual en el cuerpo de la estrella */
     left: 50%;
     transform: translate(-50%, -50%);
     font-family: 'Arial Black', sans-serif;
-    pointer-events: none;
+    
+    /* El "escudo" contra el parecido a otros clubes: */
+    /* Usamos un sombreado celeste para que el blanco se lea sobre el oro */
+    text-shadow: 
+        0 0 3px #75AADB, 
+        0 0 8px rgba(117, 170, 219, 0.8); 
+    
+    pointer-events: none; /* Para que no interfiera si alguien toca la estrella */
 }
 
-/* Ajustes para la estrella del medio (La de Qatar) */
+/* Ajustes para la estrella del medio (La de la Scaloneta) */
 .estrella-qatar {
     transform: translateY(-20px);
     animation: brilloMistico 2s infinite alternate;
@@ -946,6 +953,8 @@ button:disabled {
 
 .estrella-qatar small {
     font-size: 1.2rem;
+    /* Resplandor más fuerte para la del 22 */
+    text-shadow: 0 0 10px #75AADB, 0 0 20px rgba(255, 255, 255, 0.5);
 }
 
 @keyframes brilloMistico {
