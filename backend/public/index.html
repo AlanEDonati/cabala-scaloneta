@@ -900,33 +900,62 @@ button:disabled {
     font-weight: bold;
 }
 
+/* --- SECCIÓN ESTRELLAS CON AÑOS --- */
 .estrellas-bienvenida {
     display: flex;
-    align-items: flex-end; /* Alinea las estrellas abajo para que la del medio suba */
-    gap: 15px;
-    margin-bottom: 25px;
+    align-items: flex-end;
+    gap: 10px;
+    margin-bottom: 30px;
 }
 
-.estrellas-bienvenida span {
-    color: #D4AF37; /* Oro */
-    font-size: 4rem; /* Tamaño grande para el inicio */
-    text-shadow: 0 0 15px rgba(212, 175, 55, 0.6);
+.estrella-contenedor {
+    position: relative; /* FUNDAMENTAL para que el número se quede adentro */
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
+.estrella-contenedor span {
+    color: #D4AF37;
+    font-size: 4.5rem;
+    text-shadow: 0 0 10px rgba(0,0,0,0.2);
+    line-height: 1;
+}
+
+.estrella-contenedor small {
+    position: absolute; /* Esto hace que el número flote sobre la estrella */
+    color: #00355E; /* Azul oscuro para que se lea perfecto */
+    font-weight: 900;
+    font-size: 0.9rem;
+    top: 55%; /* Lo baja un poquito para centrarlo visualmente */
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-family: 'Arial Black', sans-serif;
+    pointer-events: none;
+}
+
+/* Ajustes para la estrella del medio (La de Qatar) */
 .estrella-qatar {
-    font-size: 5.5rem !important; /* La del medio es la más grande */
-    transform: translateY(-15px); /* La subimos un poco */
+    transform: translateY(-20px);
     animation: brilloMistico 2s infinite alternate;
 }
 
+.estrella-qatar span {
+    font-size: 6rem !important;
+}
+
+.estrella-qatar small {
+    font-size: 1.2rem;
+}
+
 @keyframes brilloMistico {
-    from {
-        filter: drop-shadow(0 0 5px #D4AF37);
-        transform: translateY(-15px) scale(1);
+    from { 
+        filter: drop-shadow(0 0 5px #D4AF37); 
+        transform: translateY(-20px) scale(1);
     }
-    to {
-        filter: drop-shadow(0 0 20px #fff700);
-        transform: translateY(-15px) scale(1.05);
+    to { 
+        filter: drop-shadow(0 0 20px #fff700); 
+        transform: translateY(-20px) scale(1.03);
     }
 }
 
@@ -939,9 +968,18 @@ button:disabled {
 <div id="pantallaBienvenida" style="position:fixed; top:0; left:0; width:100%; height:100%; background: linear-gradient(135deg, #00355E 0%, #75AADB 100%); z-index:1000000; display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center; color:white; font-family: sans-serif;">
     
     <div class="estrellas-bienvenida">
-        <span>★</span>
-        <span class="estrella-qatar">★</span>
-        <span>★</span>
+        <div class="estrella-contenedor">
+            <span>★</span>
+            <small>78</small>
+        </div>
+        <div class="estrella-contenedor estrella-qatar">
+            <span>★</span>
+            <small>22</small>
+        </div>
+        <div class="estrella-contenedor">
+            <span>★</span>
+            <small>86</small>
+        </div>
     </div>
 
     <h1 style="margin: 0 0 10px 0; font-size: 2.5rem; text-shadow: 2px 2px 4px rgba(0,0,0,0.3);">CÁBALA SCALONETA</h1>
