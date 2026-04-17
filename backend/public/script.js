@@ -134,12 +134,23 @@ function obtenerNivel(pts) {
 }
 
 function mostrarNivel() {
+    // 1. Obtenemos la info del nivel basada en los puntos globales
     const info = calcularNivel(puntos);
-    const el = document.getElementById("nivelUsuario"); // Corregido: antes decía usuarioActivoNivel
-    const barra = document.getElementById("barraProgreso");
     
-    if (el) el.innerText = `Nivel: ${info.nombre} (${puntos} pts)`;
-    if (barra) barra.style.width = info.porcentaje + "%";
+    // 2. Referenciamos los elementos del DOM
+    const elTexto = document.getElementById("nivelUsuario"); 
+    const elBarra = document.getElementById("barraProgreso");
+    
+    // 3. Actualizamos el texto: "Nivel: Hincha de Sillón (16 pts)"
+    if (elTexto) {
+        elTexto.innerText = `Nivel: ${info.nombre} (${puntos} pts)`;
+    }
+    
+    // 4. Actualizamos el ancho de la barra de oro
+    if (elBarra) {
+        // Usamos el porcentaje que devuelve calcularNivel
+        elBarra.style.width = info.porcentaje + "%";
+    }
 }
 
 
@@ -163,7 +174,15 @@ function crearAnimacionPuntos(cantidad, e) {
 function mostrarUsuario() {
     const username = localStorage.getItem("username");
     const el = document.getElementById("usuarioActivo");
-    if (el && username) el.textContent = "👤 Usuario: " + username;
+    const btnSalir = document.querySelector(".btn-salir"); // Asumiendo que le pusiste esa clase al botón
+
+    if (el && username) {
+        el.textContent = "👤 Usuario: " + username;
+        if (btnSalir) btnSalir.style.display = "inline-block"; // Lo mostramos
+    } else {
+        if (el) el.textContent = ""; // Limpiamos si no hay nadie
+        if (btnSalir) btnSalir.style.display = "none"; // Lo ocultamos
+    }
 }
 
 async function crearUsuario() {
@@ -466,6 +485,23 @@ async function verRanking() {
     try {
         const res = await fetch(`${API_BASE_URL}/ranking`);
         const data = await res.json();
+        
+        // --- 🔄 INICIO BLOQUE DE SINCRONIZACIÓN ---
+        // Buscamos tu usuario actual dentro de la lista que vino de la DB
+        const miUsuarioId = localStorage.getItem("user_id");
+        if (miUsuarioId) {
+            const misDatos = data.find(u => u.id == miUsuarioId);
+            if (misDatos) {
+                // Actualizamos la variable global y el localStorage con la realidad de la DB
+                puntos = parseInt(misDatos.puntos) || 0;
+                localStorage.setItem("puntos", puntos);
+                
+                // Actualizamos la barra visual superior inmediatamente
+                mostrarNivel();
+            }
+        }
+        // --- 🔄 FIN BLOQUE DE SINCRONIZACIÓN ---
+
         const lista = document.getElementById("listaRanking");
         if (!lista) return;
 
@@ -853,7 +889,6 @@ function lanzarPapelitos() {
 }
 
 function calcularNivel(puntos) {
-    // Definimos los niveles: nombre y puntos mínimos para llegar
     const niveles = [
         { nombre: "Hincha de Sillón", min: 0 },
         { nombre: "Cabulero Iniciado", min: 50 },
@@ -862,24 +897,26 @@ function calcularNivel(puntos) {
         { nombre: "Guardián de las 3 Estrellas", min: 500 }
     ];
 
-    // Buscamos en qué nivel está el usuario
     let nivelActual = niveles[0];
     let siguienteNivel = niveles[1];
 
+    // Buscamos el nivel (recorremos normal)
     for (let i = 0; i < niveles.length; i++) {
         if (puntos >= niveles[i].min) {
             nivelActual = niveles[i];
-            siguienteNivel = niveles[i + 1] || null; // Por si llega al nivel máximo
+            siguienteNivel = niveles[i + 1] || null;
         }
     }
 
-    // Calculamos el porcentaje para la barra
     let porcentaje = 100;
     if (siguienteNivel) {
         const rango = siguienteNivel.min - nivelActual.min;
         const progresoEnRango = puntos - nivelActual.min;
         porcentaje = (progresoEnRango / rango) * 100;
     }
+
+    // 🔥 "Seguro" para que la barra no se rompa visualmente
+    porcentaje = Math.max(0, Math.min(100, porcentaje));
 
     return { 
         nombre: nivelActual.nombre, 
@@ -900,7 +937,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 <div class="fadeIn" style="text-align:center; padding: 20px;">
                     <h2>¡Hola de nuevo, ${nombreGuardado}! 🇦🇷</h2>
                     <p>Ya sos parte de la mística. ¡A sumar puntos!</p>
-                    <button onclick="cerrarSesion()" class="btn-filter" style="margin-top:10px">Cambiar de Usuario</button>
+                    <button onclick="cerrarSesion()" class="btn-salir">
+    🚪 Salir de la concentración
+</button>
                 </div>
             `;
         }

@@ -68,22 +68,38 @@ app.post("/users", async (req, res) => {
   try {
     const { username } = req.body;
     
-    // 🛡️ Filtro de seguridad para nombres
+    // 1. 🛡️ Filtro de seguridad (Anti-insultos y longitud)
     if (!esAptoParaTodoPublico(username)) {
       return res.status(400).send("Nombre no permitido (muy corto o contiene insultos).");
     }
 
+    // 2. 🔍 BUSCAR SI EL USUARIO YA EXISTE
+    // Esto es clave para que nadie pierda sus puntos si borra el caché
+    const userCheck = await db.query(
+      "SELECT * FROM users WHERE LOWER(username) = LOWER($1)",
+      [username]
+    );
+
+    if (userCheck.rows.length > 0) {
+      console.log(`✅ Usuario recuperado: ${username}`);
+      // Si existe, devolvemos el usuario encontrado (con su ID y puntos reales)
+      return res.json(userCheck.rows[0]);
+    }
+
+    // 3. ✨ SI NO EXISTE, LO CREAMOS
     const result = await db.query(
       "INSERT INTO users (username, puntos) VALUES ($1, 0) RETURNING *",
       [username]
     );
+    
+    console.log(`🆕 Nuevo usuario creado: ${username}`);
     res.json(result.rows[0]);
+
   } catch (error) {
-    console.error(error);
-    res.status(500).send("Error creando usuario");
+    console.error("Error en /users:", error);
+    res.status(500).send("Error al procesar el usuario");
   }
 });
-
 app.get("/users", async (req, res) => {
   try {
     const result = await db.query("SELECT * FROM users ORDER BY id DESC");
